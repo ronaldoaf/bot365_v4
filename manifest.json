@@ -1,0 +1,29 @@
+{
+   "browser_action": {
+      "default_icon": "images/logo_32.png",
+      "default_popup": "popup.html",
+      "default_title": "Bot365 v3"
+   },
+   "description": "Bot goaline do Seu Cuca por filtragem",
+   "icons": {
+      "128": "images/logo_128.png",
+      "16": "images/logo_16.png",
+      "32": "images/logo_32.png",
+      "64": "images/logo_64.png"
+   },
+   "manifest_version": 2,
+   "name": "Bot365 v2",
+   "permissions": [ "storage","webNavigation","tabs", "chrome://favicon/","https://mobile.365sport365.com/*", "http://bot-ao.com/*", "webRequest","webRequestBlocking" ],
+   "version": "1.0.0",
+   "web_accessible_resources": [ "images/*" ],
+   "background": {
+    "scripts": ["js/jquery-2.1.4.min.js","js/GET_background.js","js/background.js"]
+  },
+   "content_scripts": [
+    {
+      "matches": ["https://mobile.365sport365.com/*"],
+      "css": ["css/content.css"],
+      "js": ["js/jquery-2.1.4.min.js", "js/login.js","js/GET_content.js","js/content_under_half.js","js/my_bets.js"]
+    }
+  ]
+}
