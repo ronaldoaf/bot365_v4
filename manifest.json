@@ -12,9 +12,9 @@
       "64": "images/logo_64.png"
    },
    "manifest_version": 2,
-   "name": "Bot365 v2",
+   "name": "Bot365 v3",
    "permissions": [ "storage","webNavigation","tabs", "chrome://favicon/","https://mobile.365sport365.com/*", "http://bot-ao.com/*", "webRequest","webRequestBlocking" ],
-   "version": "1.0.0",
+   "version": "1.0.1",
    "web_accessible_resources": [ "images/*" ],
    "background": {
     "scripts": ["js/jquery-2.1.4.min.js","js/GET_background.js","js/background.js"]
