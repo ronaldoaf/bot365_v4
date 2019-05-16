@@ -41,9 +41,10 @@ $(document).ready(function() {
 		
 		if ($.isEmptyObject(result)) {			
 			config={		
-				minimo_indice_para_apostar:0.02,
+				minimo_indice_para_apostar:0.01,
 				percentual_de_kelly:0.50,
-				maximo_da_banca_por_aposta:0.15
+				maximo_da_banca_por_aposta:0.15,
+				redutor:0.8
 			};		
 			chrome.storage.sync.set({config:config});		
 			
