@@ -11,7 +11,7 @@ function includes_list(lista, padrao){
 chrome.webRequest.onBeforeSendHeaders.addListener(function(details){
     for(var i=0; i < details.requestHeaders.length; ++i){
         if(details.requestHeaders[i].name === "User-Agent"){
-            details.requestHeaders[i].value = "Mozilla/5.0 (Linux; Android 8.0.0; SM-G960F Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.137 Mobile Safari/537.36";
+            details.requestHeaders[i].value = "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148";
 
             break;
         }
