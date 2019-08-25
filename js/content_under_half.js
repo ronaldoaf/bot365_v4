@@ -332,8 +332,10 @@ bot.onLoadStats=function(response){
                     //eval(localStorage.FORMULA2);
 	               
 
-				   plU_por_odds=(d_g==0)&&(goal_diff>=1.5) ? 2*(-0.00772051594*s_g + -0.00716834813*s_c + -0.000213241728*s_da + -0.00714553689*s_s + -0.000499942667*d_da + 0.000453178448*d_s + 0.118599322*goal_diff + 0.245181141*oddsU + -0.51973204) : -1;
+				   plU_por_odds=(d_g==0)&&(goal_diff>=1.5) ? 1*(-0.008731998*s_g + -0.005027927*s_c + -0.0005261647*s_da + -0.008349259*s_s + -1.610932e-05*d_da + -0.004080577*d_c + 0.1214133*goal_diff + 0.2064024*oddsU + -0.1924175*probU_diff + -0.02602331*mod75 -0.4113046) : -1;
 				   
+				   
+				   console.log(jogo.home,plU_por_odds);
 				   plO_por_odds=-1;
 				   
 				   
