@@ -9,12 +9,13 @@ function includes_list(lista, padrao){
 
 
 chrome.webRequest.onBeforeSendHeaders.addListener(function(details){
+    console.log(details);
     for(var i=0; i < details.requestHeaders.length; ++i){
-        if(details.requestHeaders[i].name === "User-Agent"){
-            details.requestHeaders[i].value = "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148";
+        //if(details.requestHeaders[i].name === "User-Agent"){
+        //    details.requestHeaders[i].value = "Mozilla/5.0 (Linux; Android 8.0; SM-S10 Lite) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Mobile Safari/537.36";
 
-            break;
-        }
+        //    break;
+        //}
     }
     return {requestHeaders: details.requestHeaders};
 }, {urls: ["<all_urls>"]}, ["blocking", "requestHeaders"]);
