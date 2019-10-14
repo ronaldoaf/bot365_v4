@@ -4,6 +4,7 @@ const DIVISOR=0.75;
 //const REDUTOR=0.80;
 
 
+
 $.waitFor=function(elemento, func, timeout=15000){
 	var cont=0;
 	var loopWait=setInterval(function(){
@@ -18,12 +19,46 @@ $.waitFor=function(elemento, func, timeout=15000){
 };
 
 
+function sendTouchEvent(x, y, element, eventType) {
+  const touchObj = new Touch({
+    identifier: Date.now(),
+    target: element,
+    clientX: x,
+    clientY: y,
+    radiusX: 2.5,
+    radiusY: 2.5,
+    rotationAngle: 10,
+    force: 0.5,
+  });
 
+  const touchEvent = new TouchEvent(eventType, {
+    cancelable: true,
+    bubbles: true,
+    touches: [touchObj],
+    targetTouches: [],
+    changedTouches: [touchObj],
+    shiftKey: false,
+  });
+
+  element.dispatchEvent(touchEvent);
+}
+
+
+
+jQuery.fn.extend({
+  tap: function() {
+		var el=this;
+		sendTouchEvent(el.offset().left, el.offset().top, el[0], 'touchstart');
+		sendTouchEvent(el.offset().left, el.offset().top, el[0], 'touchend');
+  }
+});
 
 
 
 
 $(document).ready(function(){
+
+return;
 
 
 //Se não estiver numa tela de Goalline não faz nada
@@ -207,25 +242,25 @@ bot.jaFoiApostado=function(home,away){
 
 
 bot.digitaStake=function(valor){
-	if( $('.qb-Keypad').size()==0 ) $('.qb-StakeBox').click();
-	$.waitFor('.qb-Keypad',function(){
+	if( $('.qbs-NumberButton').size()==0 ) $('.qbs-StakeBox_StakeAmount').click();
+	$.waitFor('.qbs-Keypad',function(){
 		var delay=0;
-		for(var i=1; i<=8; i++ ) $('.qb-Keypad_Delete').click();
+		for(var i=1; i<=8; i++ ) $('.qbs-DeleteButton').tap();
 		
 		var lista_teclas=(''+valor).split('');
 		lista_teclas.push('Done');
-		
+		console.log( lista_teclas);
 		$(lista_teclas).each(function(i,e){
 			delay=10+i*50;
 			setTimeout(function(){
-				$('.qb-KeypadButton:contains('+e+') ').click();
+				$('.qbs-Keypad div:contains('+e+') ').tap();
 			},delay);
 		});
 		delay+=100;
 		setTimeout(function(){
-			$('.qb-PlaceBetButton').click();
-			$.waitFor('.qb-PlaceBetButton:contains(Refer)',function(){
-				$('.qb-PlaceBetButton').click();
+			$('.qbs-PlaceBetButton').click();
+			$.waitFor('.qbs-PlaceBetButton:contains(Refer)',function(){
+				$('.qbs-PlaceBetButton').click();
 			});
 		},delay);	
 	});
