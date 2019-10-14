@@ -73,8 +73,8 @@ $(document).ready(function(){
 				$(tabs).each(function(){
 					tab_urls.push(this.url);		
 				});	
-				if (!includes_list(tab_urls, 'Goalline') ) chrome.tabs.create({url:'https://mobile.bet365.com/#type=Coupon;key=151014714C1_1_3;Goalline'});
-				if (!includes_list(tab_urls, 'MyBets') ) chrome.tabs.create({url:'https://mobile.bet365.com/#type=MyBets;key=;ip=0;lng=1'});
+				if (!includes_list(tab_urls, 'Goalline') ) chrome.tabs.create({url:'https://mobile.365sport365.com/#type=Coupon;key=151014714C1_1_3;Goalline'});
+				if (!includes_list(tab_urls, 'MyBets') ) chrome.tabs.create({url:'https://mobile.365sport365.com/#type=MyBets;key=;ip=0;lng=1'});
 				
 			});
 			
