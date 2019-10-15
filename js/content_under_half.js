@@ -262,12 +262,12 @@ bot.digitaStake=function(valor){
 				$('.qbs-Keypad div:contains('+e+') ').tap();
 			},delay);
 		});
-		delay+=200;
+		delay+=2000;
 		setTimeout(function(){
-			$('.qbs-PlaceBetButton').click();
-			$.waitFor('.qbs-PlaceBetButton:contains(Refer)',function(){
-				$('.qbs-PlaceBetButton').click();
-			});
+			$('.qbs-AcceptButton, .qbs-PlaceBetButton').click();
+			//$.waitFor('.qbs-PlaceBetButton:contains(Refer)',function(){
+			//	$('.qbs-PlaceBetButton').click();
+			//});
 		},delay);	
 	});
 }
