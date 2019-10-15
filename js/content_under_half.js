@@ -49,7 +49,10 @@ jQuery.fn.extend({
   tap: function() {
 		var el=this;
 		sendTouchEvent(el.offset().left, el.offset().top, el[0], 'touchstart');
-		sendTouchEvent(el.offset().left, el.offset().top, el[0], 'touchend');
+		//setTimeout(function(){
+			sendTouchEvent(el.offset().left, el.offset().top, el[0], 'touchend');
+		//},100);
+		
   }
 });
 
@@ -58,7 +61,7 @@ jQuery.fn.extend({
 
 $(document).ready(function(){
 
-return;
+
 
 
 //Se não estiver numa tela de Goalline não faz nada
@@ -83,7 +86,7 @@ function GM_xmlhttpRequest(parms){
 	
 }
 
-unsafeWindow=window;
+
 
 
 
@@ -105,9 +108,6 @@ function ns(texto){
 	return removeDiacritics(texto.toLowerCase());
 }
 
-
-//Simula o click real, clicando no centro do objeto
-unsafeWindow.jQuery.fn.extend({rclick:function(){var a=function(a,b){return Math.round((a+b)/2)},b={x1:$(this).offset().left,y1:$(this).offset().top,x2:$(this).offset().left+$(this).width(),y2:$(this).offset().top+$(this).height()},c=function(a,b){var c=document.createEvent("MouseEvent"),d=document.elementFromPoint(a,b);c.initMouseEvent("click",!0,!0,unsafeWindow,null,a,b,0,0,!1,!1,!1,!1,0,null),d.dispatchEvent(c)};c(a(b.x1,b.x2),a(b.y1,b.y2))}});
 
 
 function verificaSenhaSalva(){
@@ -138,7 +138,8 @@ var time_;
 
 
 
-unsafeWindow.bot={};
+
+bot={};
 
 window.bot=bot;
 bot.apostando_agora=false;
@@ -245,18 +246,23 @@ bot.digitaStake=function(valor){
 	if( $('.qbs-NumberButton').size()==0 ) $('.qbs-StakeBox_StakeAmount').click();
 	$.waitFor('.qbs-Keypad',function(){
 		var delay=0;
-		for(var i=1; i<=8; i++ ) $('.qbs-DeleteButton').tap();
-		
+		for(var i=1; i<=8; i++ ) {
+			setTimeout(function(){	
+			$('.qbs-DeleteButton').tap();
+			},delay);
+			
+			delay+=100;
+		}
 		var lista_teclas=(''+valor).split('');
 		lista_teclas.push('Done');
 		console.log( lista_teclas);
 		$(lista_teclas).each(function(i,e){
-			delay=10+i*50;
+			delay+=200;
 			setTimeout(function(){
 				$('.qbs-Keypad div:contains('+e+') ').tap();
 			},delay);
 		});
-		delay+=100;
+		delay+=200;
 		setTimeout(function(){
 			$('.qbs-PlaceBetButton').click();
 			$.waitFor('.qbs-PlaceBetButton:contains(Refer)',function(){
@@ -426,7 +432,7 @@ setInterval(function(){
     $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats_new.3.18.js' : 'https://bot-ao.com/stats.3.18.js', function(){
         bot.onLoadStats(localStorage.stats);
         //Pega o valor da banca disponível
-        $.get('https://mobile.365sport365.com/balancedataapi/pullbalance?rn='+(+new Date()+'&y=ktq'),function(res){ 
+        $.get('https://mobile.bet365.com/balancedataapi/pullbalance?rn='+(+new Date()+'&y=ktq'),function(res){ 
             bot.balance=Number(res.split('$')[2]); 
         });
         
@@ -442,7 +448,7 @@ setInterval(function(){
 
 
 //Loop Principal repete todos os comandos a cada 1 segund
-unsafeWindow.setInterval(function(){
+setInterval(function(){
 	
 	//Senão estiver logado, loga
 	login();
