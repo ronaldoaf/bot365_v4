@@ -9,6 +9,31 @@ function includes_list(lista, padrao){
 
 
 
+chrome.runtime.onMessage.addListener(function(msg) {
+    if (msg.command == "RELOAD") {
+		chrome.tabs.query({},function(tabs){
+			$(tabs).each(function(){		
+				if (
+					this.url.includes('#/IP/') ||
+					this.url.includes('MyBets') 
+				) chrome.tabs.reload(this.id);
+			});	
+		});
+	}
+	
+    if (msg.command == "SALVA_CONFIG") {
+		chrome.storage.sync.set({config:JSON.parse(msg.parm1)  });
+		//console.log(JSON.parse(msg.parm1));
+	}
+	
+	
+	
+	
+});
+
+
+
+
 
 
 
@@ -41,6 +66,22 @@ setInterval(function(){
             //if (!includes_list(tab_urls, 'MyBets') ) chrome.tabs.create({url:'https://mobile.365sport365.com/#type=MyBets;key=;ip=1;lng=1'});
             
         });
+		
+		
+		chrome.tabs.query({},function(tabs){
+			$(tabs).each(function(){
+				var tab_id=this.id;
+				if (this.url.includes('#/IP/')) {
+					chrome.storage.sync.get('config', function (result) {  
+						config=result.config;
+						chrome.tabs.executeScript(tab_id, {code:"localStorage.config='"+JSON.stringify(config)+"'"});
+					});					
+				}
+			});
+		});	
+		
+		
+		
         
     }
     else{

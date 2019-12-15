@@ -1,6 +1,6 @@
 
 
-function login(){
+function login1(){
 	
 	if(!$('.hm-MobileNavButtons').hasClass('hm-MobileNavButtons-loggedin')) {
 

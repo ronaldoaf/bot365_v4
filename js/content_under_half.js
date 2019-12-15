@@ -29,7 +29,7 @@ function verificaSenhaSalva(){
               localStorage.senha_bet365=$('#senha').val();
 			  localStorage.usuario_bet365=$('#usuario').val();
               //location.reload();
-		      //chrome.runtime.sendMessage({command:'RELOAD'});	
+		      chrome.runtime.sendMessage({command:'RELOAD'});	
 			  
         });
     }
@@ -38,12 +38,26 @@ function verificaSenhaSalva(){
 
 
 
+function login(){
+	//Se as credenciais não forem definidas não faz nada
+	if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ) return;
+	
+	//Se estiver mostrando algum usuario logado Beleza !!!
+	if($('.hm-UserName_UserNameShown').text()!='') return;  
+	
+	//Senão estiver tenta logar
+	$('.hm-Login_UserNameWrapper .hm-Login_InputField').val(localStorage.usuario_bet365);
+	$('.hm-Login_PasswordWrapper .hm-Login_InputField').val(localStorage.senha_bet365);
+	$('.hm-Login_LoginBtn').click();
+	
+}
+
 
 
 $(function(){
 setTimeout(function(){
     verificaSenhaSalva();
-},15000);
+},10000);
 
 
 
@@ -392,22 +406,34 @@ setInterval(function(){
 
 
 
-
-
 //Loop Principal repete todos os comandos a cada 1 segund
 setInterval(function(){
+	//Atualiza configuração
+	CONFIG=JSON.parse(localStorage.config);
 	
 	//Senão estiver logado, loga
-	//login();
+	login();
 	
-	//Se não tiver no GoalLine clica no GoalLine
-	if(!$('.ipe-MarketSelectorBar_Btn:contains(Goal Line)').hasClass('ipe-MarketSelectorBar_Selected') ) $('.ipe-MarketSelectorBar_Btn:contains(Goal Line)').click();
 	
-	CONFIG=JSON.parse(localStorage.config);
+	//Se não estiver fechado a tela do video, clica para fechar
+	if( !$('.lv-ClosableTabView').hasClass('lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();
+
+	//Se não estiver na ViewPoint Full Time Asians clica para mudar para ela.
+	if($('.ipo-InPlayClassificationMarketSelectorDropDown_Button').is(':not(:contains(Full Time Asians))') ) {
+		$('.ipo-InPlayClassificationMarketSelectorDropdownLabelContainer').click(); 
+		$('.lul-DropDownItem_Label:contains("Full Time Asians")').click();
+	}
+	
+	//Se o módulo QuickBet estiver habilitado desabilita
+	if( $('.qb-Btn_Switch-true').length ) $('.qb-Btn').click()
+	
+	//  $('.stk.bs-Stake_TextBox').val('1.50')
+	//  $('.bs-Btn.bs-BtnHover').click()
+	
     
 
 	//Abre os mercados colapsados
-	$('.ipe-Market:not(:has(.ipe-MarketContainer ))').each(function(i,e){ $(e).click() })
+	//$('.ipe-Market:not(:has(.ipe-MarketContainer ))').each(function(i,e){ $(e).click() })
 	//bot.interativo();
 	
 	

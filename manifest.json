@@ -11,7 +11,7 @@
       "32": "images/logo_32.png",
       "64": "images/logo_64.png"
    },
-   "manifest_version": 2,
+   "manifest_version":2,
    "name": "Bot365 v3",
    "permissions": [ "storage","webNavigation","tabs", "chrome://favicon/","https://www.bet365.com/*","https://www.365sport365.com/*","http://bot-ao.com/*", "webRequest","webRequestBlocking" ],
    "version": "0.1.0",
@@ -23,7 +23,7 @@
     {
       "matches": ["https://www.bet365.com/*","https://www.365sport365.com/*" ],
       "css": ["css/content.css"],
-      "js": ["js/jquery-2.1.4.min.js", "js/login.js","js/GET_content.js","js/content_under_half.js","js/my_bets.js"]
+      "js": ["js/jquery-2.1.4.min.js","js/GET_content.js","js/content_under_half.js","js/my_bets.js"]
     }
 
   ]
