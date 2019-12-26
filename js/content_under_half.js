@@ -19,7 +19,7 @@ $.waitFor=function(elemento, func, timeout=15000){
 };
 
 
-
+$.fn.extend({rclick:function(){var a=function(a,b){return Math.round((a+b)/2)},b={x1:$(this).offset().left,y1:$(this).offset().top,x2:$(this).offset().left+$(this).width(),y2:$(this).offset().top+$(this).height()},c=function(a,b){var c=document.createEvent("MouseEvent"),d=document.elementFromPoint(a,b);c.initMouseEvent("click",!0,!0,window,null,a,b,0,0,!1,!1,!1,!1,0,null),d.dispatchEvent(c)};c(a(b.x1,b.x2),a(b.y1,b.y2))}});
 
 function verificaSenhaSalva(){
     if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ){
@@ -53,16 +53,41 @@ function login(){
 }
 
 
+function preparaTelaInPlay(){
+	//Se não estiver da tela do Futebol (Soccer) muda para a tela Soccer
+	if( !$('.ipo-ClassificationBarButtonBase_Selected').is('.ipo-ClassificationBarButtonBase_Selected-1') ) $('.ipo-ClassificationBarButtonBase:contains(Soccer)').click();
+	
+	//Se não estiver fechado a tela do video, clica para fechar
+	if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();
+
+	//Se não estiver na ViewPoint Full Time Asians clica para mudar para ela.
+	if($('.ipo-InPlayClassificationMarketSelectorDropDown_Button').is(':not(:contains(Full Time Asians))') ) {
+		$('.ipo-InPlayClassificationMarketSelectorDropdownLabelContainer').click(); 
+		$('.lul-DropDownItem_Label:contains("Full Time Asians")').click();
+	}
+	
+
+	//Se o módulo QuickBet estiver habilitado desabilita
+	if( $('.qb-Btn_Switch-true').length ) $('.qb-Btn_Switch-true').click();
+	
+	
+	//Se existirem 2 ou maiitems no BetSlip remove tudo
+	if($('.bs-Item').length>=2) $('.bs-Header_RemoveAllLink').click();
+	
+	
+}
+
+
 
 $(function(){
-setTimeout(function(){
-    verificaSenhaSalva();
+	setTimeout(function(){
+		verificaSenhaSalva();
 },10000);
 
 
 
 //Se não estiver numa tela de Goalline não faz nada
-if (!location.hash.includes('#/IP/')) return;
+//if (!location.hash.includes('#/IP/')) return;
 
 //$.getScript('https://bot-ao.com/bet365_bot_regressao.js?' + ( +new Date() ) );
 
@@ -388,7 +413,7 @@ setInterval(function(){
     console.log('on30segs');
      
 
-
+    /*
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats.js  que executará a função bot.onLoadStats()"
     $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats_new.3.18.js' : 'https://bot-ao.com/stats.3.18.js', function(){
         bot.onLoadStats(localStorage.stats);
@@ -398,10 +423,8 @@ setInterval(function(){
         });
         
     });
-         
+    */     
     
-
-   
 },30000);
 
 
@@ -414,22 +437,15 @@ setInterval(function(){
 	//Senão estiver logado, loga
 	login();
 	
-	
-	//Se não estiver fechado a tela do video, clica para fechar
-	if( !$('.lv-ClosableTabView').hasClass('lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();
+	//Seleciona todas as opções para tela do Inplay ficar do jeito esperado
+	preparaTelaInPlay();
 
-	//Se não estiver na ViewPoint Full Time Asians clica para mudar para ela.
-	if($('.ipo-InPlayClassificationMarketSelectorDropDown_Button').is(':not(:contains(Full Time Asians))') ) {
-		$('.ipo-InPlayClassificationMarketSelectorDropdownLabelContainer').click(); 
-		$('.lul-DropDownItem_Label:contains("Full Time Asians")').click();
-	}
-	
-	//Se o módulo QuickBet estiver habilitado desabilita
-	if( $('.qb-Btn_Switch-true').length ) $('.qb-Btn').click()
 	
 	//  $('.stk.bs-Stake_TextBox').val('1.50')
 	//  $('.bs-Btn.bs-BtnHover').click()
 	
+	
+	// .ipo-Fixture
     
 
 	//Abre os mercados colapsados
@@ -437,27 +453,9 @@ setInterval(function(){
 	//bot.interativo();
 	
 	
-	//Se o quickBet fica em suspenso, não se pode apostar e clica no Cancel X, para fechar o
-	if( $('.qb-QuickBetModule').hasClass('qb-QuickBetModule_ChangeSuspended') ) $('.qb-MessageContainer_IndicationMessage:contains(Cancel)').click();
-	if( $('.qb-QuickBetModule').hasClass('qb-QuickBetModule_PlacedNoneAus') )  $('.qb-MessageContainer_IndicationMessage:contains(Cancel)').click();
-	if( $('.qb-QuickBetModule').hasClass('qb-QuickBetModule_ChangeOdds') ) $('.qb-PlaceBetButton ').click();
-	
-    if( $('.qb-QuickBetModule').hasClass('qb-QuickBetModule_PlaceBetFailed') )  {
-		if ( ($('.qb-Header_MainText:contains("available maximum")').size()>0) ){
-			var stake_max=Number( $('.qb-Header_MainText:contains("available maximum")').text().split('of ')[1] );
-			if (stake_max>0) {
-				bot.digitaStake(stake_max);
-			}
-			else{
-				$('.qb-MessageContainer_IndicationMessage:contains(Cancel)').click();
-			}
-		}
-		else {
-			$('.qb-MessageContainer_IndicationMessage:contains(Cancel)').click();	
-		}
-	}
 
-},2000);
+
+},1000);
 
 
 
