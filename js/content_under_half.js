@@ -5,21 +5,8 @@ const DIVISOR=0.75;
 
 
 
-$.waitFor=function(elemento, func, timeout=15000){
-	var cont=0;
-	var loopWait=setInterval(function(){
-		if( $(elemento).size()==1){
-			clearInterval(loopWait);
-			func();
-		}
-		cont=+100;
-		if (cont>=timeout) clearInterval(loopWait);
-	},100);	
-	
-};
 
 
-$.fn.extend({rclick:function(){var a=function(a,b){return Math.round((a+b)/2)},b={x1:$(this).offset().left,y1:$(this).offset().top,x2:$(this).offset().left+$(this).width(),y2:$(this).offset().top+$(this).height()},c=function(a,b){var c=document.createEvent("MouseEvent"),d=document.elementFromPoint(a,b);c.initMouseEvent("click",!0,!0,window,null,a,b,0,0,!1,!1,!1,!1,0,null),d.dispatchEvent(c)};c(a(b.x1,b.x2),a(b.y1,b.y2))}});
 
 function verificaSenhaSalva(){
     if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ){
@@ -42,13 +29,23 @@ function login(){
 	//Se as credenciais não forem definidas não faz nada
 	if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ) return;
 	
-	//Se estiver mostrando algum usuario logado Beleza !!!
-	if($('.hm-UserName_UserNameShown').text()!='') return;  
+	
+	
+	
+	//Se estiver mostrando algum usuario esta logado
+	var logado=($('.hm-UserName_UserNameShown').text()!='');
+	//chrome.storage.sync.set({'logado':logado});
+	
+	//Se estiver logado Beleza !!!
+	if(logado )return;  
 	
 	//Senão estiver tenta logar
 	$('.hm-Login_UserNameWrapper .hm-Login_InputField').val(localStorage.usuario_bet365);
 	$('.hm-Login_PasswordWrapper .hm-Login_InputField').val(localStorage.senha_bet365);
 	$('.hm-Login_LoginBtn').click();
+	
+	
+	
 	
 }
 
@@ -72,7 +69,7 @@ function preparaTelaInPlay(){
 	
 	
 	//Se existirem 2 ou maiitems no BetSlip remove tudo
-	if($('.bs-Item').length>=2) $('.bs-Header_RemoveAllLink').click();
+	if($('.bs-Item').length>=2) $.click('.bs-Header_RemoveAllLink');
 	
 	
 }

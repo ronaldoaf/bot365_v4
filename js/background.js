@@ -14,8 +14,8 @@ chrome.runtime.onMessage.addListener(function(msg) {
 		chrome.tabs.query({},function(tabs){
 			$(tabs).each(function(){		
 				if (
-					this.url.includes('#/IP/') ||
-					this.url.includes('MyBets') 
+					//this.url.includes('#/IP/') || 
+					this.url.includes('#/IP/') 
 				) chrome.tabs.reload(this.id);
 			});	
 		});
@@ -63,8 +63,8 @@ setInterval(function(){
                 tab_urls.push(this.url);		
             });	
             if (!includes_list(tab_urls, '#/IP/') ) chrome.tabs.create({url:'https://www.'+config.dominio+'/?nr=1#/IP/'});
-            //if (!includes_list(tab_urls, 'MyBets') ) chrome.tabs.create({url:'https://mobile.365sport365.com/#type=MyBets;key=;ip=1;lng=1'});
-            
+            //if (!includes_list(tab_urls, '#/MB/') ) chrome.tabs.create({url:'https://www.'+config.dominio+'/?nr=1#/MB/'});
+
         });
 		
 		
@@ -88,7 +88,7 @@ setInterval(function(){
         chrome.browserAction.setIcon({path: 'images/logo_32.png'});		
     }
     
-},1000)
+},1000);
 
 console.log('atualizou');
 //A cada 30 minutos fecha as abas para a reabertura automatica
@@ -98,8 +98,8 @@ setInterval(function(){
         chrome.tabs.query({},function(tabs){			
             $(tabs).each(function(){		
                 if (
-                //this.url.includes('#/IP/') ||
-                this.url.includes('#/IP/') 
+                this.url.includes('#/IP/') ||
+                this.url.includes('#/MB/') 
                 ) chrome.tabs.remove(this.id);
             });	
             
