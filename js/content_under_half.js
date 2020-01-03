@@ -64,14 +64,16 @@ function preparaTelaInPlay(){
 	}
 	
 
-	//Se o módulo QuickBet estiver habilitado desabilita
-	if( $('.qb-Btn_Switch-true').length ) $('.qb-Btn_Switch-true').click();
+	//Se o módulo QuickBet nao nestiver habilitado habilita
+	//if( $('.qb-Btn_Switch-false').length ) $('.qb-Btn_Switch-false').click();
 	
 	
+
 	//Se existirem 2 ou maiitems no BetSlip remove tudo
-	if($('.bs-Item').length>=2) $.click('.bs-Header_RemoveAllLink');
+	//if($('.bs-Item').length>=2) $.click('.bs-Header_RemoveAllLink');
 	
-	
+	//Se MyBets nao estiver selecionado seleciona
+	//if(!$('.bw-BetslipHeader_Item:contains(My Bets)').is('bw-BetslipHeader_Item-active') ) $('.bw-BetslipHeader_Item:contains(My Bets)').click();
 }
 
 
@@ -103,6 +105,15 @@ function ns(texto){
 }
 */
 
+//Coloca bo Modo QuickBet
+var StorageItems=JSON.parse(localStorage['ns_weblib_util.StorageItems']);
+if( JSON.parse(localStorage['ns_weblib_util.StorageItems']).quickBetEnabled==false) {
+	StorageItems.quickBetEnabled=true;
+	localStorage['ns_weblib_util.StorageItems']=JSON.stringify(StorageItems);
+	location.reload();
+}
+
+
 
 
 verificaSenhaSalva();
@@ -129,15 +140,37 @@ bot.apostando_agora=false;
 
 
 
+
+bot.jogoLive=function(fixture){
+	var goal_arr=$(fixture).find('.gll-ParticipantCentered_BlankName:eq(6) .gll-ParticipantCentered_Handicap').text().split(' ')[2].split(',');
+	
+	
+	return {
+		tempo: Number($(fixture).find('.ipo-InPlayTimer').text().split(':')[0]),
+		goalline: goal_arr.length==2 ? ( Number(goal_arr[0])+Number(goal_arr[1]) )/2 : Number(goal_arr[0]),
+		odds_over:  Number($(fixture).find('.gll-ParticipantCentered_BlankName:eq(5) .gll-ParticipantCentered_Odds').text()),
+		odds_under: Number($(fixture).find('.gll-ParticipantCentered_BlankName:eq(6) .gll-ParticipantCentered_Odds').text()),
+		sel_under: $(fixture).find('.gll-ParticipantCentered_BlankName:eq(6)')
+	};
+}
+
+bot.jaFoiApostado=function(home,away){
+	myBetsList=JSON.parse(localStorage['myBetsList']);
+	
+	var retorno=false;
+	$(myBetsList).each(function(){		
+		if ( (this.home==home) && (this.away==away) )  retorno=true;
+	});
+	return retorno;
+};
+
+
+
 bot.stake=function(percent_da_banca){
 	myBetsList=JSON.parse(localStorage['myBetsList']);
     
     var soma=0;
-	/*
-	$(myBetsList).each(function(){
-		soma+=this.cash_out_return;		
-	});
-	*/
+
 	var soma_stakes=0;
 	$(myBetsList).each(function(){
 		soma_stakes+=this.stake;		
@@ -154,116 +187,14 @@ bot.stake=function(percent_da_banca){
     return stake_var;
 };
 
-bot.jogoLive = function (home,away){
-	var ahSel=function(selObj){
-	   var arr_ah=selObj.find('.ip-Participant_OppName').text().split(',');
-
-	   var s=0;
-	   $(arr_ah).each(function(i,e){ s+=Number(e); });
-	   return s/$(arr_ah).size();
-	};	
-   
-	jogo=-1;
-	$('div.ipe-ParticipantCouponFixtureName_Participant ').each(function(i,e){ 
-		if( 
-			($(e).find('.ipe-ParticipantCouponFixtureName_TeamName:eq(0)').html()==home)  && 
-			($(e).find('.ipe-ParticipantCouponFixtureName_TeamName:eq(1)').html()==away )
-		){
-			//saida=i;
-			jogo={
-					market: $(e).parents('.ipe-Market')
-			};
-				   
-		}		
-		
-	});
-	if (jogo==-1) return jogo;
-	
-	jogo.selecoes=$(jogo.market).find('.ip-Participant ');
-	jogo.numJogos=$(jogo.market).find('.ipe-ParticipantCouponFixtureName_Participant').size();
-	
-	$(jogo.market).find('.ipe-ParticipantCouponFixtureName_Participant').each(function(i,e){ 
-		if( 
-			($(e).find('.ipe-ParticipantCouponFixtureName_TeamName:eq(0)').html()==home)  && 
-			($(e).find('.ipe-ParticipantCouponFixtureName_TeamName:eq(1)').html()==away )
-		){
-			jogo.positionInMarket=i;
-			jogo.posSelsJogo=[jogo.positionInMarket, jogo.positionInMarket+jogo.numJogos];
-			jogo.selHome=$(jogo.market).find('.ip-Participant').eq(jogo.posSelsJogo[0]);
-			jogo.selAway=$(jogo.market).find('.ip-Participant').eq(jogo.posSelsJogo[1]);	
-		}
-	});
-	jogo.tempo=Number($(jogo.market).find('.ipe-ParticipantCouponFixtureName_Timer').eq(jogo.positionInMarket).text().split(':')[0]);
-	
-	jogo.gH_atual=Number($(jogo.market).find('.ipe-ParticipantCouponFixtureName_Team1Score').eq(jogo.positionInMarket).text());
-	jogo.gA_atual=Number($(jogo.market).find('.ipe-ParticipantCouponFixtureName_Team2Score').eq(jogo.positionInMarket).text());
-	
-	jogo.AH_Home=ahSel(jogo.selHome);
-	jogo.AH_Away=ahSel(jogo.selAway);
-	
-	jogo.odds_Over=Number(jogo.selHome.find('.ip-Participant_OppOdds').text()); 
-	jogo.odds_Under=Number(jogo.selAway.find('.ip-Participant_OppOdds').text()); 
-	
-	
-	return jogo;
-};
-
-bot.jaFoiApostado=function(home,away){
-	myBetsList=JSON.parse(localStorage['myBetsList']);
-	
-	var retorno=false;
-	$(myBetsList).each(function(){		
-		if ( (this.match==home+' v '+away) && (this.mercado.includes('Goal Line'))    )  retorno=true;
-		
-	});
-	return retorno;
-	
-    
-
-};
-
-
-
-
-bot.digitaStake=function(valor){
-	if( $('.qbs-NumberButton').size()==0 ) $('.qbs-StakeBox_StakeAmount').click();
-	$.waitFor('.qbs-Keypad',function(){
-		var delay=0;
-		for(var i=1; i<=8; i++ ) {
-			setTimeout(function(){	
-			$('.qbs-DeleteButton').tap();
-			},delay);
-			
-			delay+=100;
-		}
-		var lista_teclas=(''+valor).split('');
-		lista_teclas.push('Done');
-		console.log( lista_teclas);
-		$(lista_teclas).each(function(i,e){
-			delay+=200;
-			setTimeout(function(){
-				$('.qbs-Keypad div:contains('+e+') ').tap();
-			},delay);
-		});
-		delay+=2000;
-		setTimeout(function(){
-			$('.qbs-AcceptButton, .qbs-PlaceBetButton').click();
-			//$.waitFor('.qbs-PlaceBetButton:contains(Refer)',function(){
-			//	$('.qbs-PlaceBetButton').click();
-			//});
-		},delay);	
-	});
-}
 
 bot.apostar=function(selObj, percent_da_banca){ 
 	bot.apostando_agora=true;
 	selObj.click();
-	$.waitFor('.qb-StakeBox', function(){
-        //Usa os creditos
-        if( $('.qb-UseBetCredits_CheckBox:not(.qb-UseBetCredits_CheckBox-selected)').size()>0 ) $('.qb-UseBetCredits_CheckBox').click();
-		bot.digitaStake(bot.stake(percent_da_banca));
+    $.waitFor('.qb-QuickBetModule input',function(){
+      $('.qb-QuickBetModule  input').val( bot.stake(percent_da_banca) ); 
+	  $('.qb-QuickBetModule :contains(Place Bet)').click();
 	});
-
 };
 
 
@@ -291,10 +222,10 @@ bot.onLoadStats=function(response){
    
    //bot.fila_de_apostas=[];
 
-   $('.ipe-ParticipantCouponFixtureName_Participant').each(function(i,e){
+   $('.ipo-Fixture').each(function(i,fixture){
 
-	   var home=$(e).find('.ipe-ParticipantCouponFixtureName_TeamName:eq(0)').text();
-	   var away=$(e).find('.ipe-ParticipantCouponFixtureName_TeamName:eq(1)').text();
+	   var home=$(fixture).find('.ipo-TeamStack_TeamWrapper:eq(0)').text();
+	   var away=$(fixture).find('.ipo-TeamStack_TeamWrapper:eq(1)').text();
 	   
 
 	   $(jogos).each(function(ii,jogo){			   
@@ -319,7 +250,7 @@ bot.onLoadStats=function(response){
 				   
                    
 				   //Se o elemento DOM da linha do jogo 
-				   jogo_selecionado=bot.jogoLive(home,away);
+				   jogo_selecionado=bot.jogoLive(fixture);
                    
                    if( jogo_selecionado.tempo != 45) return; 
                    
@@ -327,9 +258,9 @@ bot.onLoadStats=function(response){
                     j_sel=jogo_selecionado;
                     
 					//Aposta no Under
-					goalline=jogo_selecionado.AH_Away;
+					goalline=jogo_selecionado.goalline;
                     
-                     var probUnder=1.0/j_sel.odds_Under/(1.0/j_sel.odds_Under + 1.0/j_sel.odds_Over);
+                     var probUnder=1.0/j_sel.odds_Under/(1.0/j_sel.odds_under + 1.0/j_sel.odds_over);
 		
                
                     s_g=j.gh+j.ga;
@@ -369,20 +300,13 @@ bot.onLoadStats=function(response){
                     //Se o não atingir o indice mínimo não aposta
                     //if( (plU_por_odds <  CONFIG.minimo_indice_para_apostar) && (plO_por_odds <  CONFIG.minimo_indice_para_apostar)	  ) return;
                     
-                    if (plO_por_odds >=  CONFIG.minimo_indice_para_apostar) {
-						var percent_da_banca=plO_por_odds;              
-						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
-						percent_da_banca*=CONFIG.percentual_de_kelly;
-						bot.apostar(jogo_selecionado.selHome, percent_da_banca );
-						return;
-					}	
 					
 
                     if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
 						var percent_da_banca=plU_por_odds;              
 						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
 						percent_da_banca*=CONFIG.percentual_de_kelly;
-						bot.apostar(jogo_selecionado.selAway, percent_da_banca );
+						bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
 						return;
                     }
 					
@@ -410,20 +334,24 @@ setInterval(function(){
     console.log('on30segs');
      
 
-    /*
+    
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats.js  que executará a função bot.onLoadStats()"
     $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats_new.3.18.js' : 'https://bot-ao.com/stats.3.18.js', function(){
         bot.onLoadStats(localStorage.stats);
         //Pega o valor da banca disponível
-        $.get('https://mobile.365sport365.com/balancedataapi/pullbalance?rn='+(+new Date()+'&y=ktq'),function(res){ 
+        $.get('https://www.365sport365.com/balancedataapi/pullbalance?rn=1',function(res){ 
             bot.balance=Number(res.split('$')[2]); 
         });
         
     });
-    */     
+      
     
 },30000);
 
+
+$.get('https://www.365sport365.com/balancedataapi/pullbalance?rn='+(+new Date()),function(res){ 
+    bot.balance=Number(res.split('$')[2]); 
+});
 
 
 //Loop Principal repete todos os comandos a cada 1 segund

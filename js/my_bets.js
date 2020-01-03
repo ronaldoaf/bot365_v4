@@ -30,13 +30,14 @@ setInterval(function(){
 		
 		myBetsList.push({
             home: $(this).find('.mbl-SoccerOpenBetParticipantLhs_HomeTeamName').text(),
-			away: $(this).find('.mbl-SoccerOpenBetParticipantLhs_AwayTeamName').text()
+			away: $(this).find('.mbl-SoccerOpenBetParticipantLhs_AwayTeamName').text(),
+			stake: Number(/[0-9^.]+/.exec($(this).find('.mbl-OpenBetItemLhsDetails_StakeText').text())[0])
 		});
 
 	});
 	
-	
-	console.log(myBetsList);
+	 
+	//console.log(myBetsList);
 	localStorage.myBetsList=JSON.stringify(myBetsList);
 	localStorage.myBetsLastUpdate=(+new Date());
 	
