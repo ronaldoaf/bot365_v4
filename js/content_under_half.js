@@ -73,7 +73,12 @@ function preparaTelaInPlay(){
 	//if($('.bs-Item').length>=2) $.click('.bs-Header_RemoveAllLink');
 	
 	//Se MyBets nao estiver selecionado seleciona
-	//if(!$('.bw-BetslipHeader_Item:contains(My Bets)').is('bw-BetslipHeader_Item-active') ) $('.bw-BetslipHeader_Item:contains(My Bets)').click();
+	if(!$('.bw-BetslipHeader_Item:contains(My Bets)').is('.bw-BetslipHeader_Item-active') ) $('.bw-BetslipHeader_Item:contains(My Bets)').click();
+	
+	
+	//Coloca no MyBets Live senão estiver
+	if( $('.mbr-MyBetsHeaderRhs_ButtonSelected:contains(Live)').length==0) $('.mbr-MyBetsHeaderRhs_Button:contains(Live)').click();
+
 }
 
 
