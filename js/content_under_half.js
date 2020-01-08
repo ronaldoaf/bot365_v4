@@ -105,7 +105,14 @@ function myBets(){
 }
 
 
-
+$.storageItem=function(chave, valor){
+    var StorageItems=JSON.parse(localStorage['ns_weblib_util.StorageItems']);
+    if(valor!==undefined){
+        StorageItems[chave]=valor;
+        localStorage['ns_weblib_util.StorageItems']=JSON.stringify(StorageItems);
+    }
+    return StorageItems[chave];
+};
 
 $(function(){
 	setTimeout(function(){
@@ -117,15 +124,13 @@ $(function(){
 //Se não estiver numa tela de Goalline não faz nada
 //if (!location.hash.includes('#/IP/')) return;
 
-$.getScript('https://bot-ao.com/bet365_bot_regressao.js?' + ( +new Date() ) );
+//$.getScript('https://bot-ao.com/bet365_bot_regressao.js?' + ( +new Date() ) );
 
 
 
 //Coloca bo Modo QuickBet
-var StorageItems=JSON.parse(localStorage['ns_weblib_util.StorageItems']);
-if( JSON.parse(localStorage['ns_weblib_util.StorageItems']).quickBetEnabled==false) {
-	StorageItems.quickBetEnabled=true;
-	localStorage['ns_weblib_util.StorageItems']=JSON.stringify(StorageItems);
+if( $.storageItem('quickBetEnabled')==false) {
+    $.storageItem('quickBetEnabled', true);
 	location.reload();
 }
 
@@ -206,9 +211,11 @@ bot.stake=function(percent_da_banca){
 
 bot.apostar=function(selObj, percent_da_banca){ 
 	bot.apostando_agora=true;
+    //$.storageItem('quickBetStake', ''+bot.stake(percent_da_banca) );
+    
 	selObj.click();
-    $.waitFor('.qb-QuickBetModule input',function(){
-      $('.qb-QuickBetModule  input').val( bot.stake(percent_da_banca) ); 
+    $.waitFor('.qb-QuickBetStake_InputField',function(){
+      $('.qb-QuickBetStake_InputField').val(bot.stake(percent_da_banca) );
 	  $('.qb-QuickBetModule :contains(Place Bet)').click();
 	});
 };
