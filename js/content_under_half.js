@@ -215,7 +215,7 @@ bot.apostar=function(selObj, percent_da_banca){
     
 	selObj.click();
     $.waitFor('.qb-QuickBetStake_InputField',function(){
-      $('.qb-QuickBetStake_InputField').val(bot.stake(percent_da_banca) );
+      $('.qb-QuickBetStake_InputField').sendkeys('{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}'+bot.stake(percent_da_banca) );
 	  $('.qb-QuickBetModule :contains(Place Bet)').click();
 	});
 };
