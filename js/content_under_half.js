@@ -124,7 +124,8 @@ $(function(){
 //Se não estiver numa tela de Goalline não faz nada
 //if (!location.hash.includes('#/IP/')) return;
 
-//$.getScript('https://bot-ao.com/bet365_bot_regressao.js?' + ( +new Date() ) );
+//Atualiza a Regressão dinamicamene
+$.getScript('https://bot-ao.com/bet365_bot_regressao.js');
 
 
 
@@ -234,7 +235,8 @@ bot.onLoadStats=function(response){
    
 
    var jogos=JSON.parse(response);
-
+    
+   //console.log(jogos);
 
    //Se o flag bot.apostando_agora estiver true, não tenta aposta
    //if(bot.apostando_agora) return;
@@ -249,7 +251,8 @@ bot.onLoadStats=function(response){
 
 	   var home=$(fixture).find('.ipo-TeamStack_TeamWrapper:eq(0)').text();
 	   var away=$(fixture).find('.ipo-TeamStack_TeamWrapper:eq(1)').text();
-	   
+        
+      
 
 	   $(jogos).each(function(ii,jogo){			   
 			 if (bot.apostando_agora) return;
@@ -258,19 +261,20 @@ bot.onLoadStats=function(response){
 				   
                    //console.log(jogo.tempo);
 				   //Se a aba myBets não foi atualiza nos últimos 2 segundos sai;
-				   if( ( +new Date() ) - Number(localStorage.myBetsLastUpdate) >2000) return;
+				   //if( ( +new Date() ) - Number(localStorage.myBetsLastUpdate) >2000) return;
 				   
 				   //Senão estiver no half time sai
                    //if( jogo.time != 'half') return;   
                      
-                  
+                   
                    //Se quase não tiver ataque perigosos sai, porque pode ser um jogo com erro nos dados
-                   if( (jogo.daHf+jogo.daAf )<5) return;  
-                                   
+                   if( (jogo.daH+jogo.daA )<5) return;  
+                   
+                   
                    //Se já houve aposta nesse jogo sai.
 				   if( bot.jaFoiApostado(home+' v '+away) ) return;   
                    
-				   
+				   //console.log(jogo);
                    
 				   //Se o elemento DOM da linha do jogo 
 				   jogo_selecionado=bot.jogoLive(fixture);
@@ -283,22 +287,22 @@ bot.onLoadStats=function(response){
 					//Aposta no Under
 					goalline=jogo_selecionado.goalline;
                     
-                     var probUnder=1.0/j_sel.odds_Under/(1.0/j_sel.odds_under + 1.0/j_sel.odds_over);
+                    var probUnder=1.0/j_sel.odds_under/(1.0/j_sel.odds_under + 1.0/j_sel.odds_over);
 		
                
-                    s_g=j.gh+j.ga;
-                    s_c=j.ch+j.ca;
-                    s_da=j.dah+j.daa;
-                    s_s=j.sh+j.sa;
-                    d_g=Math.abs(j.gh-j.ga);
-                    d_c=Math.abs(j.ch-j.ca);
-                    d_da=Math.abs(j.dah-j.daa);
-                    d_s=Math.abs( j.sh-j.sa);
-					s_r=j.rh+j.ra;
+                    s_g=j.gH+j.gA;
+                    s_c=j.cH+j.cA;
+                    s_da=j.daH+j.daA;
+                    s_s=j.sH+j.sA;
+                    d_g=Math.abs(j.gH-j.gA);
+                    d_c=Math.abs(j.cH-j.cA);
+                    d_da=Math.abs(j.daH-j.daA);
+                    d_s=Math.abs( j.sH-j.sA);
+					s_r=j.sr;
                     goal=goalline;
                     goal_diff=goalline-s_g;
-                    oddsU=1.0*j_sel.odds_Under;
-					oddsO=1.0*j_sel.odds_Over;
+                    oddsU=1.0*j_sel.odds_under;
+					oddsO=1.0*j_sel.odds_over;
                     probU=probUnder;
                     probU_diff=Math.abs( probUnder-0.5 );
                     mod0=Number(goalline%1==0);
@@ -309,11 +313,12 @@ bot.onLoadStats=function(response){
         
                     //eval(localStorage.FORMULA2);
 	               
-
+                   
 				   plU_por_odds=(d_g==0)&&(goal_diff>=1.5) ? 1*(-0.008731998*s_g + -0.005027927*s_c + -0.0005261647*s_da + -0.008349259*s_s + -1.610932e-05*d_da + -0.004080577*d_c + 0.1214133*goal_diff + 0.2064024*oddsU + -0.1924175*probU_diff + -0.02602331*mod75 -0.4113046) : -1;
+                   
+                   //plU_por_odds=1*(-0.008731998*s_g + -0.005027927*s_c + -0.0005261647*s_da + -0.008349259*s_s + -1.610932e-05*d_da + -0.004080577*d_c + 0.1214133*goal_diff + 0.2064024*oddsU + -0.1924175*probU_diff + -0.02602331*mod75 -0.4113046);
 				   
-				   
-				   console.log(jogo.home,plU_por_odds);
+				   //console.log(jogo.home,plU_por_odds);
 				   plO_por_odds=-1;
 				   
 				   
@@ -358,11 +363,11 @@ setInterval(function(){
      
 
     
-    //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats.js  que executará a função bot.onLoadStats()"
-    $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats4.js' : 'https://bot-ao.com/stats4.js', function(){
+    //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
+    $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats4_new.js' : 'https://bot-ao.com/stats4.js', function(){
         bot.onLoadStats(localStorage.stats);
         //Pega o valor da banca disponível
-        $.get('https://www.365sport365.com/balancedataapi/pullbalance?rn=1',function(res){ 
+        $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn=1',function(res){ 
             bot.balance=Number(res.split('$')[2]); 
         });
         
@@ -371,11 +376,11 @@ setInterval(function(){
     
 },30000);
 
-
-$.get('https://www.365sport365.com/balancedataapi/pullbalance?rn='+(+new Date()),function(res){ 
+/*
+$.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date()),function(res){ 
     bot.balance=Number(res.split('$')[2]); 
 });
-
+*/
 
 //Loop Principal repete todos os comandos a cada 1 segund
 setInterval(function(){
