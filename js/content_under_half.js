@@ -7,7 +7,6 @@ const DIVISOR=0.75;
 
 
 
-
 function verificaSenhaSalva(){
     if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ){
         
@@ -164,8 +163,8 @@ bot.apostando_agora=false;
 
 
 bot.jogoLive=function(fixture){
-	var goal_arr=$(fixture).find('.gll-ParticipantCentered_BlankName:eq(6) .gll-ParticipantCentered_Handicap').text().split(' ')[2].split(',');
-	
+    //console.log(fixture);
+	var goal_arr=$(fixture).find('.ipo-MainMarketRenderer:eq(2) .gll-ParticipantCentered_Handicap:eq(0)').text().split(' ')[2].split(',');
 	
 	return {
 		tempo: Number($(fixture).find('.ipo-InPlayTimer').text().split(':')[0]),
