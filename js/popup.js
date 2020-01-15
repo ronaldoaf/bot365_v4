@@ -44,8 +44,8 @@ $(document).ready(function() {
                 dominio: "365sport365.com",
 				minimo_indice_para_apostar:0.01,
 				percentual_de_kelly:0.50,
-				maximo_da_banca_por_aposta:0.15,
-				redutor:0.8
+				maximo_da_banca_por_aposta:0.10,
+				redutor:0.9
 			};		
 			chrome.storage.sync.set({config:config});		
 			

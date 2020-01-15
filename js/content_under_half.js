@@ -5,6 +5,15 @@ const DIVISOR=0.75;
 
 
 
+//Função que manipula uma variável que a bet365 guarda configurações do ambiente
+$.storageItem=function(chave, valor){
+    var StorageItems=JSON.parse(localStorage['ns_weblib_util.StorageItems']);
+    if(valor!==undefined){
+        StorageItems[chave]=valor;
+        localStorage['ns_weblib_util.StorageItems']=JSON.stringify(StorageItems);
+    }
+    return StorageItems[chave];
+};
 
 
 function verificaSenhaSalva(){
@@ -28,12 +37,8 @@ function login(){
 	//Se as credenciais não forem definidas não faz nada
 	if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ) return;
 	
-	
-	
-	
 	//Se estiver mostrando algum usuario esta logado
 	var logado=($('.hm-UserName_UserNameShown').text()!='');
-	//chrome.storage.sync.set({'logado':logado});
 	
 	//Se estiver logado Beleza !!!
 	if(logado )return;  
@@ -42,9 +47,6 @@ function login(){
 	$('.hm-Login_UserNameWrapper .hm-Login_InputField').val(localStorage.usuario_bet365);
 	$('.hm-Login_PasswordWrapper .hm-Login_InputField').val(localStorage.senha_bet365);
 	$('.hm-Login_LoginBtn').click();
-	
-	
-	
 	
 }
 
@@ -62,25 +64,13 @@ function preparaTelaInPlay(){
 		$('.lul-DropDownItem_Label:contains("Full Time Asians")').click();
 	}
 	
-
-	//Se o módulo QuickBet nao nestiver habilitado habilita
-	//if( $('.qb-Btn_Switch-false').length ) $('.qb-Btn_Switch-false').click();
-	
-	
-
-	//Se existirem 2 ou maiitems no BetSlip remove tudo
-	//if($('.bs-Item').length>=2) $.click('.bs-Header_RemoveAllLink');
-	
 	//Se MyBets nao estiver selecionado seleciona
 	if(!$('.bw-BetslipHeader_Item:contains(My Bets)').is('.bw-BetslipHeader_Item-active') ) $('.bw-BetslipHeader_Item:contains(My Bets)').click();
 	
-	
+    
 	//Coloca no MyBets Unsettled senão estiver
 	if( $('.mbr-MyBetsHeaderRhs_ButtonSelected:contains(Unsettled)').length==0) $('.mbr-MyBetsHeaderRhs_Button:contains(Unsettled)').click();
     
-    
-
-
 }
 
 function myBets(){
@@ -100,58 +90,42 @@ function myBets(){
 	localStorage.myBetsList=JSON.stringify(myBetsList);
 	localStorage.myBetsLastUpdate=(+new Date());
     
+}
+
+
+
+function inicializa(){
     
-}
+    //Atualiza a Regressão dinamicamente
+    $.getScript('https://bot-ao.com/bet365_bot_regressao.js');
 
-
-$.storageItem=function(chave, valor){
-    var StorageItems=JSON.parse(localStorage['ns_weblib_util.StorageItems']);
-    if(valor!==undefined){
-        StorageItems[chave]=valor;
-        localStorage['ns_weblib_util.StorageItems']=JSON.stringify(StorageItems);
+    //Coloca bo Modo QuickBet
+    if( $.storageItem('quickBetEnabled')==false) {
+        $.storageItem('quickBetEnabled', true);
+        location.reload();
     }
-    return StorageItems[chave];
-};
 
-$(function(){
-	setTimeout(function(){
-		verificaSenhaSalva();
-},10000);
+    //Se myBetList não existir cria
+    if( localStorage.myBetsList==undefined ) localStorage.myBetsList='[{"home_away":"A v B","stake":0}]';
 
 
+    //Verifica se as credenciais estão definidas
+    verificaSenhaSalva();
+    $(function(){
+        setTimeout(function(){
+            verificaSenhaSalva();
+    },10000);
 
-//Se não estiver numa tela de Goalline não faz nada
-//if (!location.hash.includes('#/IP/')) return;
-
-//Atualiza a Regressão dinamicamene
-$.getScript('https://bot-ao.com/bet365_bot_regressao.js');
-
-
-
-//Coloca bo Modo QuickBet
-if( $.storageItem('quickBetEnabled')==false) {
-    $.storageItem('quickBetEnabled', true);
-	location.reload();
 }
 
-//Se myBetList não existir cria
-if( localStorage.myBetsList==undefined ) localStorage.myBetsList='[{"home_away":"A v B","stake":0}]';
 
 
-
-verificaSenhaSalva();
-
-
+//Exexuta a funções assim que a página é carregadoa
+inicializa()
 
 
 
 
-
-
-
-
-
-var time_;
 
 
 
@@ -161,9 +135,7 @@ bot={};
 window.bot=bot;
 bot.apostando_agora=false;
 
-
-
-
+//Extrai informações jogo a partir da Fixture(Linha que tem a linhas formações sobre o jogo tela do inplay)
 bot.jogoLive=function(fixture){
     //console.log(fixture);
 	var goal_arr=$(fixture).find('.ipo-MainMarketRenderer:eq(2) .gll-ParticipantCentered_Handicap:eq(0)').text().split(' ')[2].split(',');
@@ -177,6 +149,8 @@ bot.jogoLive=function(fixture){
 	};
 }
 
+
+//Verifica se já vou aposta  no jogo
 bot.jaFoiApostado=function(home_v_away){
 	myBetsList=JSON.parse(localStorage['myBetsList']);
 	
@@ -188,7 +162,7 @@ bot.jaFoiApostado=function(home_v_away){
 };
 
 
-
+//Calucla o stake a partir do percentual da banca 
 bot.stake=function(percent_da_banca){
 	myBetsList=JSON.parse(localStorage.myBetsList);
     
@@ -211,10 +185,8 @@ bot.stake=function(percent_da_banca){
 };
 
 
-bot.apostar=function(selObj, percent_da_banca){ 
-	bot.apostando_agora=true;
-    //$.storageItem('quickBetStake', ''+bot.stake(percent_da_banca) );
-    
+//Submete a aposta
+bot.apostar=function(selObj, percent_da_banca){
 	selObj.click();
     $.waitFor('.qb-QuickBetStake_InputField',function(){
       $('.qb-QuickBetStake_InputField').sendkeys('{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}'+bot.stake(percent_da_banca) );
@@ -232,22 +204,9 @@ bot.apostar=function(selObj, percent_da_banca){
 bot.onLoadStats=function(response){
 
    bot.apostando_agora=false;
-   //bot.lista_de_apostas=[];
    
-
    var jogos=JSON.parse(response);
     
-   //console.log(jogos);
-
-   //Se o flag bot.apostando_agora estiver true, não tenta aposta
-   //if(bot.apostando_agora) return;
-    
-    
-    var anota_apostas=[];
-   //Para jogo no cupom
-   
-   //bot.fila_de_apostas=[];
-
    $('.ipo-Fixture').each(function(i,fixture){
 
 	   var home=$(fixture).find('.ipo-TeamStack_TeamWrapper:eq(0)').text();

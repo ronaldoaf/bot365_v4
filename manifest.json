@@ -14,7 +14,7 @@
    "manifest_version":2,
    "name": "Bot365 v4",
    "permissions": [ "storage","webNavigation","tabs", "chrome://favicon/","https://www.bet365.com/*","https://www.365sport365.com/*","http://bot-ao.com/*", "webRequest","webRequestBlocking" ],
-   "version": "0.1.2",
+   "version": "0.2.0",
    "web_accessible_resources": [ "images/*" ],
    "background": {
     "scripts": ["js/jquery-2.1.4.min.js","js/background.js"]
@@ -23,7 +23,7 @@
     {
       "matches": ["https://www.bet365.com/*","https://www.365sport365.com/*" ],
       "css": ["css/content.css"],
-      "js": ["js/jquery-2.1.4.min.js","js/bililiteRange.js","js/jquery.sendkeys.js","js/auxiliar.js","js/GET_content.js","js/content_under_half.js","js/my_bets.js"],
+      "js": ["js/jquery-2.1.4.min.js","js/bililiteRange.js","js/jquery.sendkeys.js","js/auxiliar.js","js/GET_content.js","js/content_under_half.js"],
 	  "all_frames":true
     }
 
