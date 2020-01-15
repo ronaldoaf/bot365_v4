@@ -134,6 +134,8 @@ if( $.storageItem('quickBetEnabled')==false) {
 	location.reload();
 }
 
+//Se myBetList não existir cria
+if( localStorage.myBetsList==undefined ) localStorage.myBetsList='[{"home_away":"A v B","stake":0}]';
 
 
 
@@ -360,7 +362,9 @@ bot.onLoadStats=function(response){
 setInterval(function(){		
     console.log('on30segs');
      
-
+    //Clica no Live do My Bets só para dar uma atualizada na lista
+    $('.mbr-MyBetsHeaderRhs_Button:contains(Live)').click();
+    
     
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
     $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats4_new.js' : 'https://bot-ao.com/stats4.js', function(){
