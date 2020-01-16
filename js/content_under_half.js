@@ -114,14 +114,15 @@ function inicializa(){
     $(function(){
         setTimeout(function(){
             verificaSenhaSalva();
-    },10000);
+        },10000);
+    });
 
 }
 
 
 
 //Exexuta a funções assim que a página é carregadoa
-inicializa()
+inicializa();
 
 
 
@@ -338,11 +339,6 @@ setInterval(function(){
     
 },30000);
 
-/*
-$.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date()),function(res){ 
-    bot.balance=Number(res.split('$')[2]); 
-});
-*/
 
 //Loop Principal repete todos os comandos a cada 1 segund
 setInterval(function(){
@@ -387,4 +383,4 @@ window.setInterval(function(){
 },15*60*1000);
 
 
-});
+
