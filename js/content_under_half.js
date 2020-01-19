@@ -110,7 +110,6 @@ function inicializa(){
 
 
     //Verifica se as credenciais estão definidas
-    verificaSenhaSalva();
     $(function(){
         setTimeout(function(){
             verificaSenhaSalva();
@@ -123,9 +122,6 @@ function inicializa(){
 
 //Exexuta a funções assim que a página é carregadoa
 inicializa();
-
-
-
 
 
 
@@ -272,10 +268,10 @@ bot.onLoadStats=function(response){
                     mod75=Number(goalline%1==0.75);
                     
         
-                    //eval(localStorage.FORMULA2);
+                    eval(localStorage.FORMULA2);
 	               
                    
-				   plU_por_odds=(d_g==0)&&(goal_diff>=1.5) ? 1*(-0.008731998*s_g + -0.005027927*s_c + -0.0005261647*s_da + -0.008349259*s_s + -1.610932e-05*d_da + -0.004080577*d_c + 0.1214133*goal_diff + 0.2064024*oddsU + -0.1924175*probU_diff + -0.02602331*mod75 -0.4113046) : -1;
+				   //plU_por_odds=(d_g==0)&&(goal_diff>=1.5) ? 1*(-0.008731998*s_g + -0.005027927*s_c + -0.0005261647*s_da + -0.008349259*s_s + -1.610932e-05*d_da + -0.004080577*d_c + 0.1214133*goal_diff + 0.2064024*oddsU + -0.1924175*probU_diff + -0.02602331*mod75 -0.4113046) : -1;
                    
                    //plU_por_odds=1*(-0.008731998*s_g + -0.005027927*s_c + -0.0005261647*s_da + -0.008349259*s_s + -1.610932e-05*d_da + -0.004080577*d_c + 0.1214133*goal_diff + 0.2064024*oddsU + -0.1924175*probU_diff + -0.02602331*mod75 -0.4113046);
 				   
