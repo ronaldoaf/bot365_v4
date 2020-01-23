@@ -266,8 +266,13 @@ bot.onLoadStats=function(response){
                     mod25=Number(goalline%1==0.25);
                     mod50=Number(goalline%1==0.50);
                     mod75=Number(goalline%1==0.75);
+                   
+
+                    if (mod0)  DIVISOR=0.7;
+                    if (mod25) DIVISOR=0.5;
+                    if (mod50) DIVISOR=0.6;
+                    if (mod75) DIVISOR=0.6;
                     
-        
                     eval(localStorage.FORMULA2);
 	               
                    
@@ -288,9 +293,8 @@ bot.onLoadStats=function(response){
 					
 
                     if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
-						var percent_da_banca=plU_por_odds;              
+						var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds/DIVISOR;              
 						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
-						percent_da_banca*=CONFIG.percentual_de_kelly;
 						bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
 						return;
                     }
