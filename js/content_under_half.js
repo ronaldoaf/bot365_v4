@@ -1,6 +1,6 @@
 var CONFIG;
 
-const DIVISOR=0.75;
+var DIVISOR=0.75;
 //const REDUTOR=0.80;
 
 
