@@ -1,6 +1,6 @@
 var CONFIG;
 
-var DIVISOR=0.75;
+const DIVISOR=0.75;
 //const REDUTOR=0.80;
 
 
@@ -186,11 +186,12 @@ bot.stake=function(percent_da_banca){
 bot.apostar=function(selObj, percent_da_banca){
 	selObj.click();
     $.waitFor('.qb-QuickBetStake_InputField',function(){
+      //Usa os créditos 
+      if( !$('.qb-QuickBetUseBetCredits_CheckBox').is('.qb-QuickBetUseBetCredits_Checkbox-checked') ) $('.qb-QuickBetUseBetCredits_CheckBox').click();
       $('.qb-QuickBetStake_InputField').sendkeys('{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}'+bot.stake(percent_da_banca) );
 	  $('.qb-QuickBetModule :contains(Place Bet)').click();
 	});
 };
-
 
 
 
