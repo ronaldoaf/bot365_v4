@@ -71,6 +71,9 @@ function preparaTelaInPlay(){
 	//Coloca no MyBets Unsettled senão estiver
 	if( $('.mbr-MyBetsHeaderRhs_ButtonSelected:contains(Unsettled)').length==0) $('.mbr-MyBetsHeaderRhs_Button:contains(Unsettled)').click();
     
+    //Clica no Show More Bets
+    if($('.mbv-ShowMoreBetsButton').length>0) $('.mbv-ShowMoreBetsButton').click();
+    
 }
 
 function myBets(){
