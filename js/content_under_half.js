@@ -271,7 +271,9 @@ bot.onLoadStats=function(response){
                     mod50=Number(goalline%1==0.50);
                     mod75=Number(goalline%1==0.75);
                    
-
+                    X=s_g/Math.log(s_s+0.75);
+                    Y=Math.pow(s_s,1.5);
+                    
                     if (mod0)  DIVISOR=0.7;
                     if (mod25) DIVISOR=0.5;
                     if (mod50) DIVISOR=0.6;
