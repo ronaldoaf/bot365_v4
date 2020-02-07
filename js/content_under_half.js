@@ -297,7 +297,7 @@ bot.onLoadStats=function(response){
                     //if( (plU_por_odds <  CONFIG.minimo_indice_para_apostar) && (plO_por_odds <  CONFIG.minimo_indice_para_apostar)	  ) return;
                     
 					
-					DIVISOR=1.0;
+					//DIVISOR=1.0;
                     if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
 						var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds/DIVISOR;              
 						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
