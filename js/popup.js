@@ -43,8 +43,8 @@ $(document).ready(function() {
 			config={	
                 dominio: "365sport365.com",
 				minimo_indice_para_apostar:0.02,
-				percentual_de_kelly:0.8,
-				maximo_da_banca_por_aposta:0.15,
+				percentual_de_kelly:0.4,
+				maximo_da_banca_por_aposta:0.10,
 				redutor:0.9
 			};		
 			chrome.storage.sync.set({config:config});		
