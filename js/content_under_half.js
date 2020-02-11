@@ -4,7 +4,6 @@ var DIVISOR=0.75;
 //const REDUTOR=0.80;
 
 
-
 //Função que manipula uma variável que a bet365 guarda configurações do ambiente
 $.storageItem=function(chave, valor){
     var StorageItems=JSON.parse(localStorage['ns_weblib_util.StorageItems']);
@@ -287,7 +286,7 @@ bot.onLoadStats=function(response){
                    //plU_por_odds=1*(-0.008731998*s_g + -0.005027927*s_c + -0.0005261647*s_da + -0.008349259*s_s + -1.610932e-05*d_da + -0.004080577*d_c + 0.1214133*goal_diff + 0.2064024*oddsU + -0.1924175*probU_diff + -0.02602331*mod75 -0.4113046);
 				   
 				   //console.log(jogo.home,plU_por_odds);
-				   plO_por_odds=-1;
+				   plO_por_odds=-1; 
 				   
 				   
                    console.log([home, away, plU_por_odds, plO_por_odds]);
@@ -296,9 +295,12 @@ bot.onLoadStats=function(response){
                     //Se o não atingir o indice mínimo não aposta
                     //if( (plU_por_odds <  CONFIG.minimo_indice_para_apostar) && (plO_por_odds <  CONFIG.minimo_indice_para_apostar)	  ) return;
                     
+					//Se for fim de semena altera o minimo para apostar
+					var MINIMO_PARA_APOSTAR=(new Date()).getDay()>=6 ? CONFIG.minimo_indice_fim_de_semana : CONFIG.minimo_indice_para_apostar;
+					
 					
 					DIVISOR=1.0;
-                    if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
+                    if (plU_por_odds >= MINIMO_PARA_APOSTAR) {
 						var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds/DIVISOR;              
 						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
 						bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
