@@ -272,7 +272,12 @@ bot.onLoadStats=function(response){
                    
                     X=s_g/Math.log(s_s+0.75);
                     Y=Math.pow(s_s,1.5);
-                    
+					L1=Math.log(1+s_s);
+					L2=Math.log(1+L1);
+					L3=Math.log(1+L2);
+					
+					
+					
                     if (mod0)  DIVISOR=0.7;
                     if (mod25) DIVISOR=0.5;
                     if (mod50) DIVISOR=0.6;

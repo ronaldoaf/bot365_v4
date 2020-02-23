@@ -42,11 +42,11 @@ $(document).ready(function() {
 		if ($.isEmptyObject(result)) {			
 			config={	
                 dominio: "365sport365.com",
-				minimo_indice_para_apostar:0.01,
+				minimo_indice_para_apostar:0.02,
 				minimo_indice_fim_de_semana:0.02,
-				percentual_de_kelly:0.4,
-				maximo_da_banca_por_aposta:0.10,
-				redutor:0.9
+				percentual_de_kelly:0.5,
+				maximo_da_banca_por_aposta:0.12,
+				redutor:0.95
 			};		
 			chrome.storage.sync.set({config:config});		
 			
