@@ -1,8 +1,5 @@
 var CONFIG;
 
-var DIVISOR=0.75;
-//const REDUTOR=0.80;
-
 
 //Função que manipula uma variável que a bet365 guarda configurações do ambiente
 $.storageItem=function(chave, valor){
@@ -37,15 +34,21 @@ function login(){
 	if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ) return;
 	
 	//Se estiver mostrando algum usuario esta logado
-	var logado=($('.hm-UserName_UserNameShown').text()!='');
+	var logado=($('.hm-MainHeaderMembersWide_MembersMenuIcon').length==1);
 	
-	//Se estiver logado Beleza !!!
+	//Se estiver logado Beleza, se não continua para tentar realizar o login
 	if(logado )return;  
 	
-	//Senão estiver tenta logar
-	$('.hm-Login_UserNameWrapper .hm-Login_InputField').val(localStorage.usuario_bet365);
-	$('.hm-Login_PasswordWrapper .hm-Login_InputField').val(localStorage.senha_bet365);
-	$('.hm-Login_LoginBtn').click();
+	//Se o popup de login não estiver aparecendo clica no botão Log In, para que apareça
+	if( $('.lms-StandardLogin_Username').length==0)  {
+		//Espera até que o popup aparece e então preenche com as credenciais e tenta o login
+		$('.hm-MainHeaderRHSLoggedOutWide_Login ').click();
+		 $.waitFor('.lms-StandardLogin_Username',function(){
+			$('.lms-StandardLogin_Username').val(localStorage.usuario_bet365);
+			$('.lms-StandardLogin_Password ').val(localStorage.senha_bet365);
+			$('.lms-StandardLogin_LoginButton ').click();
+		});
+	}
 	
 }
 
@@ -192,6 +195,7 @@ bot.apostar=function(selObj, percent_da_banca){
       if( !$('.qb-QuickBetUseBetCredits_CheckBox').is('.qb-QuickBetUseBetCredits_Checkbox-checked') ) $('.qb-QuickBetUseBetCredits_CheckBox').click();
       $('.qb-QuickBetStake_InputField').sendkeys('{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}'+bot.stake(percent_da_banca) );
 	  $('.qb-QuickBetModule :contains(Place Bet)').click();
+	  console.log(percent_da_banca, bot.stake(percent_da_banca) );
 	});
 };
 
@@ -208,12 +212,16 @@ bot.onLoadStats=function(response){
    var jogos=JSON.parse(response);
     
    $('.ipo-Fixture').each(function(i,fixture){
-
+	   
+	   //Se foi iniciado o processo de aposta interrompe o loop
+	   if (bot.apostando_agora) return false;
+		
+		
 	   var home=$(fixture).find('.ipo-TeamStack_TeamWrapper:eq(0)').text();
 	   var away=$(fixture).find('.ipo-TeamStack_TeamWrapper:eq(1)').text();
         
       
-
+	   
 	   $(jogos).each(function(ii,jogo){			   
 			 if (bot.apostando_agora) return;
 		   
@@ -286,19 +294,10 @@ bot.onLoadStats=function(response){
                     eval(localStorage.FORMULA2);
 	               
                    
-				   //plU_por_odds=(d_g==0)&&(goal_diff>=1.5) ? 1*(-0.008731998*s_g + -0.005027927*s_c + -0.0005261647*s_da + -0.008349259*s_s + -1.610932e-05*d_da + -0.004080577*d_c + 0.1214133*goal_diff + 0.2064024*oddsU + -0.1924175*probU_diff + -0.02602331*mod75 -0.4113046) : -1;
-                   
-                   //plU_por_odds=1*(-0.008731998*s_g + -0.005027927*s_c + -0.0005261647*s_da + -0.008349259*s_s + -1.610932e-05*d_da + -0.004080577*d_c + 0.1214133*goal_diff + 0.2064024*oddsU + -0.1924175*probU_diff + -0.02602331*mod75 -0.4113046);
-				   
-				   //console.log(jogo.home,plU_por_odds);
-				   plO_por_odds=-1; 
 				   
 				   
-                   console.log([home, away, plU_por_odds, plO_por_odds]);
+                   console.log([home, away, plU_por_odds]);
                     
-
-                    //Se o não atingir o indice mínimo não aposta
-                    //if( (plU_por_odds <  CONFIG.minimo_indice_para_apostar) && (plO_por_odds <  CONFIG.minimo_indice_para_apostar)	  ) return;
                     
 					//Se for fim de semena altera o minimo para apostar
 					var MINIMO_PARA_APOSTAR=(new Date()).getDay()>=6 ? CONFIG.minimo_indice_fim_de_semana : CONFIG.minimo_indice_para_apostar;
@@ -306,10 +305,12 @@ bot.onLoadStats=function(response){
 					
 					DIVISOR=1.0;
                     if (plU_por_odds >= MINIMO_PARA_APOSTAR) {
-						var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds/DIVISOR;              
+						var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds;              
 						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
 						bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
-						return;
+						bot.apostando_agora=true;
+						
+						return false;  //Dá break no loop foreach
                     }
 					
 				
@@ -367,19 +368,6 @@ setInterval(function(){
     //Atualiza info sobre as apostas em andamento
     myBets();
     
-	
-	//  $('.stk.bs-Stake_TextBox').val('1.50')
-	//  $('.bs-Btn.bs-BtnHover').click()
-	
-	
-	// .ipo-Fixture
-    
-
-	//Abre os mercados colapsados
-	//$('.ipe-Market:not(:has(.ipe-MarketContainer ))').each(function(i,e){ $(e).click() })
-	//bot.interativo();
-	
-	
 
 
 },1000);
