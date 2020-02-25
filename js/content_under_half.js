@@ -194,7 +194,10 @@ bot.apostar=function(selObj, percent_da_banca){
       //Usa os créditos 
       if( !$('.qb-QuickBetUseBetCredits_CheckBox').is('.qb-QuickBetUseBetCredits_Checkbox-checked') ) $('.qb-QuickBetUseBetCredits_CheckBox').click();
       $('.qb-QuickBetStake_InputField').sendkeys('{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}'+bot.stake(percent_da_banca) );
-	  $('.qb-QuickBetModule :contains(Place Bet)').click();
+	  setTimeout(function(){
+		$('.qb-QuickBetModule :contains(Place Bet)').click();  
+	  },1000);
+	  
 	  console.log(percent_da_banca, bot.stake(percent_da_banca) );
 	});
 };
