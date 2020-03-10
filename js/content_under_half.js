@@ -190,12 +190,12 @@ bot.stake=function(percent_da_banca){
 //Submete a aposta
 bot.apostar=function(selObj, percent_da_banca){
 	selObj.click();
-    $.waitFor('.qb-QuickBetStake_InputField',function(){
+    $.waitFor('.bss-StakeBox_StakeValueInput',function(){
       //Usa os créditos 
-      if( !$('.qb-QuickBetUseBetCredits_CheckBox').is('.qb-QuickBetUseBetCredits_Checkbox-checked') ) $('.qb-QuickBetUseBetCredits_CheckBox').click();
-      $('.qb-QuickBetStake_InputField').sendkeys('{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}'+bot.stake(percent_da_banca) );
+      //if( !$('.qb-QuickBetUseBetCredits_CheckBox').is('.qb-QuickBetUseBetCredits_Checkbox-checked') ) $('.qb-QuickBetUseBetCredits_CheckBox').click();
+      $('.bss-StakeBox_StakeValueInput').sendkeys('{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}'+bot.stake(percent_da_banca) );
 	  setTimeout(function(){
-		$('.qb-QuickBetModule :contains(Place Bet)').click();  
+		$('.bss-PlaceBetButton').click();  
 	  },1000);
 	  
 	  console.log(percent_da_banca, bot.stake(percent_da_banca) );
