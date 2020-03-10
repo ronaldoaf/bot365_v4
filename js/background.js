@@ -1,3 +1,6 @@
+
+
+
 function includes_list(lista, padrao){
 	var contem=false;
 	$(lista).each(function(){
@@ -62,9 +65,13 @@ setInterval(function(){
             $(tabs).each(function(){
                 tab_urls.push(this.url);		
             });	
+			//Se a aba do Inplay não estiver aberta, abre-a
             if (!includes_list(tab_urls, '#/IP/') ) chrome.tabs.create({url:'https://www.'+config.dominio+'/?nr=1#/IP/'});
-            //if (!includes_list(tab_urls, '#/MB/') ) chrome.tabs.create({url:'https://www.'+config.dominio+'/?nr=1#/MB/'});
-
+			
+			//Se já estiver aberta verfica a do MyBets
+			if (includes_list(tab_urls, '#/IP/') ) {
+				if (!includes_list(tab_urls, '#/MB/') ) chrome.tabs.create({url:'https://www.'+config.dominio+'/?nr=1#/MB/'});
+			}
         });
 		
 		
@@ -72,6 +79,7 @@ setInterval(function(){
 			$(tabs).each(function(){
 				var tab_id=this.id;
 				if (this.url.includes('#/IP/')) {
+
 					chrome.storage.sync.get('config', function (result) {  
 						config=result.config;
 						chrome.tabs.executeScript(tab_id, {code:"localStorage.config='"+JSON.stringify(config)+"'"});
@@ -88,7 +96,7 @@ setInterval(function(){
         chrome.browserAction.setIcon({path: 'images/logo_32.png'});		
     }
     
-},1000);
+},2000);
 
 console.log('atualizou');
 //A cada 30 minutos fecha as abas para a reabertura automatica

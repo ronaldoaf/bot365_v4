@@ -66,32 +66,34 @@ function preparaTelaInPlay(){
 		$('.lul-DropDownItem_Label:contains("Full Time Asians")').click();
 	}
 	
-	//Se MyBets nao estiver selecionado seleciona
-	if(!$('.bw-BetslipHeader_Item:contains(My Bets)').is('.bw-BetslipHeader_Item-active') ) $('.bw-BetslipHeader_Item:contains(My Bets)').click();
 	
-    
-	//Coloca no MyBets Unsettled senão estiver
-	if( $('.mbr-MyBetsHeaderRhs_ButtonSelected:contains(Unsettled)').length==0) $('.mbr-MyBetsHeaderRhs_Button:contains(Unsettled)').click();
-    
-    //Clica no Show More Bets
-    if($('.mbv-ShowMoreBetsButton').length>0) $('.mbv-ShowMoreBetsButton').click();
+
+	//Se o Betslip estiver minimizado clica para expandir
+	if( $('.bss-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
+	
+	
+	//Se o Betslip estiver expandido e com o botão AcceptButton sendo mostrado  clica em RemoveAll (removendo todas as seleções)
+	if( $('.bss-BetslipStandardModule').is('.bss-BetslipStandardModule_Expanded:has(.bs-AcceptButton)') ) $('.bs-ControlBar_RemoveAll ').click();
+	
+	//Clica no Done depois da aposta realizada
+	if( $('.bs-ReceiptContent_Done').length ) $('.bs-ReceiptContent_Done').click();
     
 }
 
 function myBets(){
+	//Coloca no MyBets Unsettled senão estiver
+	if( !$('.myb-MyBetsHeader_ButtonSelected').is(':contains(Unsettled)') ) $('.myb-MyBetsHeader_Button:contains(Unsettled)').click()
+	
     myBetsList=[];
-    
-    if( $('.mbr-OpenBetItemRhs').length==0) return;
-    
-    $('.mbr-OpenBetItemRhs').each(function(){
-        if( !$(this).is('.mbr-OpenBetItemRhs_DefaultExpanded') ) $(this).find('.mbr-OpenBetItemHeaderRhs_BetDetailsContainer').click(); 
-        
+	$('.myb-OpenBetItem').each(function(){ 
+		if( $(this).is('.myb-OpenBetItem_Collapsed') ) $(this).find('.myb-OpenBetItem_Header').click();
+		
 		myBetsList.push({
-            home_v_away: $(this).find('.mbr-OpenBetParticipantRhs_FixtureDescriptionText').text(),
-			stake: Number(/[0-9^.]+/.exec($(this).find('.mbr-OpenBetItemRhsDetails_StakeText').text())[0])
+			home_v_away: $(this).find('.myb-BetParticipant_FixtureDescription').clone().children().remove().end().text(),
+			stake: Number( $(this).find('.myd-MyBetsModuleDefault_BetInformationText').text() )
 		});
-    });  
-    
+	});
+	
 	localStorage.myBetsList=JSON.stringify(myBetsList);
 	localStorage.myBetsLastUpdate=(+new Date());
     
@@ -103,16 +105,6 @@ function inicializa(){
     
     //Atualiza a Regressão dinamicamente
     $.getScript('https://bot-ao.com/bet365_bot_regressao.js');
-
-    //Coloca bo Modo QuickBet
-    if( $.storageItem('quickBetEnabled')==false) {
-        $.storageItem('quickBetEnabled', true);
-        location.reload();
-    }
-
-    //Se myBetList não existir cria
-    if( localStorage.myBetsList==undefined ) localStorage.myBetsList='[{"home_away":"A v B","stake":0}]';
-
 
     //Verifica se as credenciais estão definidas
     $(function(){
@@ -231,8 +223,7 @@ bot.onLoadStats=function(response){
 			 if(  (ns(jogo.home)==ns(home)) && (ns(jogo.away)==ns(away)) ){
 				   
                    //console.log(jogo.tempo);
-				   //Se a aba myBets não foi atualiza nos últimos 2 segundos sai;
-				   //if( ( +new Date() ) - Number(localStorage.myBetsLastUpdate) >2000) return;
+
 				   
 				   //Senão estiver no half time sai
                    //if( jogo.time != 'half') return;   
@@ -335,13 +326,16 @@ bot.onLoadStats=function(response){
 
 
 
-//---A cada 30 segundos
-setInterval(function(){		
-    console.log('on30segs');
-     
-    //Clica no Live do My Bets só para dar uma atualizada na lista
-    $('.mbr-MyBetsHeaderRhs_Button:contains(Live)').click();
-    
+//---A cada 20 segundos
+setInterval(function(){	
+	//Senão estiver na Tela do Inplay não faz nada 
+	if (!location.hash.includes('IP')) return;
+	
+	//Se a aba myBets não foi atualiza nos últimos 5 segundos sai;
+	if( ( +new Date() ) - Number(localStorage.myBetsLastUpdate) >5000) return;
+	
+	
+    console.log('on20segs');
     
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
     $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats4_new.js' : 'https://bot-ao.com/stats4.js', function(){
@@ -354,7 +348,7 @@ setInterval(function(){
     });
       
     
-},30000);
+},20000);
 
 
 //Loop Principal repete todos os comandos a cada 1 segund
@@ -362,14 +356,19 @@ setInterval(function(){
 	//Atualiza configuração
 	CONFIG=JSON.parse(localStorage.config);
 	
-	//Senão estiver logado, loga
-	login();
+	if (location.hash.includes('IP')) {
+		//Senão estiver logado, loga
+		login();
+		
+		//Seleciona todas as opções para tela do Inplay ficar do jeito esperado
+		preparaTelaInPlay();
 	
-	//Seleciona todas as opções para tela do Inplay ficar do jeito esperado
-	preparaTelaInPlay();
-
-    //Atualiza info sobre as apostas em andamento
-    myBets();
+	}
+	
+	if (location.hash.includes('MB')){
+		//Atualiza info sobre as apostas em andamento
+		myBets();
+	}
     
 
 
