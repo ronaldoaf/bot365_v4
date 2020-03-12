@@ -278,6 +278,7 @@ bot.onLoadStats=function(response){
 					L2=Math.log(1+L1);
 					L3=Math.log(1+L2);
 					
+					M1=Math.log(1+goal_diff);
 					
 					
 
