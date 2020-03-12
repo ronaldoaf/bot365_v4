@@ -184,7 +184,7 @@ bot.apostar=function(selObj, percent_da_banca){
 	selObj.click();
     $.waitFor('.bss-StakeBox_StakeValueInput',function(){
       //Usa os créditos 
-      //if( !$('.qb-QuickBetUseBetCredits_CheckBox').is('.qb-QuickBetUseBetCredits_Checkbox-checked') ) $('.qb-QuickBetUseBetCredits_CheckBox').click();
+      if( $('.bsc-BetCreditsHeader_CheckBox').is(':not(.bsc-BetCreditsHeader_CheckBox-selected)')  )$('.bsc-BetCreditsHeader_CheckBox').click();
       $('.bss-StakeBox_StakeValueInput').sendkeys('{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}'+bot.stake(percent_da_banca) );
 	  setTimeout(function(){
 		$('.bss-PlaceBetButton').click();  
