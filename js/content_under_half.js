@@ -280,7 +280,10 @@ bot.onLoadStats=function(response){
 					
 					
 					
-
+                    if (mod0)  DIVISOR=0.7;
+                    if (mod25) DIVISOR=0.5;
+                    if (mod50) DIVISOR=0.6;
+                    if (mod75) DIVISOR=0.6;
                     
                     eval(localStorage.FORMULA2);
 	               
@@ -290,10 +293,12 @@ bot.onLoadStats=function(response){
                    console.log([home, away, plU_por_odds]);
                     
                     
-
-			
+					//Se for fim de semena altera o minimo para apostar
+					var MINIMO_PARA_APOSTAR=(new Date()).getDay()>=6 ? CONFIG.minimo_indice_fim_de_semana : CONFIG.minimo_indice_para_apostar;
 					
-                    if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
+					
+					DIVISOR=1.0;
+                    if (plU_por_odds >= MINIMO_PARA_APOSTAR) {
 						var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds;              
 						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
 						bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
@@ -336,7 +341,7 @@ setInterval(function(){
     $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats4_new.js' : 'https://bot-ao.com/stats4.js', function(){
         bot.onLoadStats(localStorage.stats);
         //Pega o valor da banca disponível
-        $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date())+'&y=OVL',function(res){ 
+        $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn=1',function(res){ 
             bot.balance=Number(res.split('$')[2]); 
         });
         
@@ -346,7 +351,7 @@ setInterval(function(){
 },20000);
 
 
-//Loop Principal repete todos os comandos a cada 1 segundo
+//Loop Principal repete todos os comandos a cada 1 segund
 setInterval(function(){
 	//Atualiza configuração
 	CONFIG=JSON.parse(localStorage.config);
