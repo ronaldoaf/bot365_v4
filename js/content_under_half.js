@@ -280,7 +280,7 @@ bot.onLoadStats=function(response){
 					
 					M1=Math.log(1+goal_diff);
 					
-					
+					W=Number(home.includes('Women'));
 
                     
                     eval(localStorage.FORMULA2);
