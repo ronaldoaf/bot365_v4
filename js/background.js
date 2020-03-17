@@ -96,7 +96,7 @@ setInterval(function(){
         chrome.browserAction.setIcon({path: 'images/logo_32.png'});		
     }
     
-},2000);
+},4000);
 
 console.log('atualizou');
 //A cada 30 minutos fecha as abas para a reabertura automatica
