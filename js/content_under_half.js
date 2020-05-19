@@ -55,17 +55,13 @@ function login(){
 
 function preparaTelaInPlay(){
 	//Se não estiver da tela do Futebol (Soccer) muda para a tela Soccer
-	if( !$('.ipo-ClassificationBarButtonBase_Selected').is('.ipo-ClassificationBarButtonBase_Selected-1') ) $('.ipo-ClassificationBarButtonBase:contains(Soccer)').click();
+	if( !$('.ovm-ClassificationBarButton-active').is('.ovm-ClassificationBarButton-1') ) $('.ovm-ClassificationBarButton-1').click();
 	
 	//Se não estiver fechado a tela do video, clica para fechar
 	if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();
 
-	//Se não estiver na ViewPoint Full Time Asians clica para mudar para ela.
-	if($('.ipo-InPlayClassificationMarketSelectorDropDown_Button').is(':not(:contains(Full Time Asians))') ) {
-		$('.ipo-InPlayClassificationMarketSelectorDropdownLabelContainer').click(); 
-		$('.lul-DropDownItem_Label:contains("Full Time Asians")').click();
-	}
-	
+	//Se não estiver na ViewPoint Goal Line clica para mudar para ela.
+	if( !$('.ovm-ClassificationMarketSwitcherMenu_Item-active').is(':contains(Goal Line)')   ) $('.ovm-ClassificationMarketSwitcherMenu_Item:contains(Goal Line)').click();
 	
 
 	//Se o Betslip estiver minimizado clica para expandir
@@ -81,6 +77,9 @@ function preparaTelaInPlay(){
 }
 
 function myBets(){
+	//Se não estiver fechado a tela do video, clica para fechar
+	if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();	
+	
 	//Coloca no MyBets Unsettled senão estiver
 	if( !$('.myb-MyBetsHeader_ButtonSelected').is(':contains(Unsettled)') ) $('.myb-MyBetsHeader_Button:contains(Unsettled)').click()
 	
@@ -132,14 +131,14 @@ bot.apostando_agora=false;
 //Extrai informações jogo a partir da Fixture(Linha que tem a linhas formações sobre o jogo tela do inplay)
 bot.jogoLive=function(fixture){
     //console.log(fixture);
-	var goal_arr=$(fixture).find('.ipo-MainMarketRenderer:eq(2) .gll-ParticipantCentered_Handicap:eq(0)').text().split(' ')[2].split(',');
+	var goal_arr=$(fixture).find('.ovm-ParticipantStackedCentered_Handicap:eq(0)').text().split(',');
 	
 	return {
-		tempo: Number($(fixture).find('.ipo-InPlayTimer').text().split(':')[0]),
+		tempo: Number($(fixture).find('.ovm-InPlayTimer').text().split(':')[0]),
 		goalline: goal_arr.length==2 ? ( Number(goal_arr[0])+Number(goal_arr[1]) )/2 : Number(goal_arr[0]),
-		odds_over:  Number($(fixture).find('.gll-ParticipantCentered_BlankName:eq(5) .gll-ParticipantCentered_Odds').text()),
-		odds_under: Number($(fixture).find('.gll-ParticipantCentered_BlankName:eq(6) .gll-ParticipantCentered_Odds').text()),
-		sel_under: $(fixture).find('.ipo-MainMarketRenderer:eq(2) .gll-ParticipantCentered_BlankName:eq(1)' )
+		odds_over:  Number($(fixture).find('.ovm-ParticipantStackedCentered_Odds:eq(0)').text()),
+		odds_under: Number($(fixture).find('.ovm-ParticipantStackedCentered_Odds:eq(1)').text()),
+		sel_under: $(fixture).find('.ovm-ParticipantStackedCentered:eq(1)' )
 	};
 }
 
@@ -206,14 +205,14 @@ bot.onLoadStats=function(response){
    
    var jogos=JSON.parse(response);
     
-   $('.ipo-Fixture').each(function(i,fixture){
+   $('.ovm-Fixture').each(function(i,fixture){
 	   
 	   //Se foi iniciado o processo de aposta interrompe o loop
 	   if (bot.apostando_agora) return false;
 		
 		
-	   var home=$(fixture).find('.ipo-TeamStack_TeamWrapper:eq(0)').text();
-	   var away=$(fixture).find('.ipo-TeamStack_TeamWrapper:eq(1)').text();
+	   var home=$(fixture).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(0)').text();
+	   var away=$(fixture).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(1)').text();
         
       
 	   
