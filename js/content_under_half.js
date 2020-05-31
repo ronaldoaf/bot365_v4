@@ -60,10 +60,21 @@ function preparaTelaInPlay(){
 	//Se não estiver fechado a tela do video, clica para fechar
 	if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();
 
-	//Se não estiver na ViewPoint Goal Line clica para mudar para ela.
-	if( !$('.ovm-ClassificationMarketSwitcherMenu_Item-active').is(':contains(Goal Line)')   ) $('.ovm-ClassificationMarketSwitcherMenu_Item:contains(Goal Line)').click();
-	
 
+	//Se não estiver na ViewPoint Goal Line clica para mudar para ela.
+	if( $('.ovm-ClassificationMarketSwitcherMenu_Item-active').length ){
+		//Tela Grande
+		if( !$('.ovm-ClassificationMarketSwitcherMenu_Item-active').is(':contains(Goal Line)')   ) $('.ovm-ClassificationMarketSwitcherMenu_Item:contains(Goal Line)').click();
+	}
+	else{
+		//Tela Pequena
+		if( !$('.ovm-ClassificationMarketSwitcherDropdownButton').is(':contains(Goal Line)') ){
+			$('.ovm-ClassificationMarketSwitcherDropdownButton').click();
+			$('.ovm-ClassificationMarketSwitcherDropdownPopup_Item:contains(:contains(Goal Line)').click();
+		}	
+	}
+
+	
 	//Se o Betslip estiver minimizado clica para expandir
 	if( $('.bss-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
 	
