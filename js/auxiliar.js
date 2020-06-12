@@ -1,16 +1,20 @@
 jQuery.fn.extend({
-  click: function(){
-	var dispatchMouseEvent = function(target, var_args) {
-	  var e = document.createEvent("MouseEvents");
-	  e.initEvent.apply(e, Array.prototype.slice.call(arguments, 1));
-	  target.dispatchEvent(e);
-	};		  
-	this.each(function(){
-		dispatchMouseEvent(this, 'mouseover', true, true);
-		dispatchMouseEvent(this, 'mousedown', true, true);
-		dispatchMouseEvent(this, 'click', true, true);
-		dispatchMouseEvent(this, 'mouseup', true, true);
-	}) 
+  click: function(func){
+	if(func==undefined){
+		var dispatchMouseEvent = function(target, var_args) {
+		  var e = document.createEvent("MouseEvents");
+		  e.initEvent.apply(e, Array.prototype.slice.call(arguments, 1));
+		  target.dispatchEvent(e);
+		};		  
+		this.each(function(){
+			dispatchMouseEvent(this, 'mouseover', true, true);
+			dispatchMouseEvent(this, 'mousedown', true, true);
+			dispatchMouseEvent(this, 'click', true, true);
+			dispatchMouseEvent(this, 'mouseup', true, true);
+		}) 
+	} else{
+		this.on('click', func);
+	}	
   }
 });
  

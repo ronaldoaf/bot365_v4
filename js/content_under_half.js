@@ -19,9 +19,8 @@ function verificaSenhaSalva(){
         $('#salvar_senha').click(function(){
               localStorage.senha_bet365=$('#senha').val();
 			  localStorage.usuario_bet365=$('#usuario').val();
-              //location.reload();
-		      chrome.runtime.sendMessage({command:'RELOAD'});	
-			  
+              location.reload();
+		      chrome.runtime.sendMessage({command:'RELOAD'});	  
         });
     }
 }
