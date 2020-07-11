@@ -289,7 +289,7 @@ bot.onLoadStats=function(response){
 					
 					M1=Math.log(1+goal_diff);
 					
-					hand=abs(j.handicap);
+					hand=Math.abs(j.handicap);
 					W=j.W;
 					
 
