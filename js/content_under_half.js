@@ -289,7 +289,9 @@ bot.onLoadStats=function(response){
 					
 					M1=Math.log(1+goal_diff);
 					
-					W=Number(home.includes('Women'));
+					hand=abs(j.handicap);
+					W=j.W;
+					
 
                     
                     eval(localStorage.FORMULA2);
