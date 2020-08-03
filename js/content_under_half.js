@@ -75,12 +75,25 @@ function preparaTelaInPlay(){
 
 	
 	//Se o Betslip estiver minimizado clica para expandir
-	if( $('.bss-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
+	//if( $('.bss-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
 	
 	
 	//Se o Betslip estiver expandido e com o botão AcceptButton sendo mostrado  clica em RemoveAll (removendo todas as seleções)
-	if( $('.bss-BetslipStandardModule').is('.bss-BetslipStandardModule_Expanded:has(.bs-AcceptButton)') ) $('.bs-ControlBar_RemoveAll ').click();
-	
+	if( $('.bss-BetslipStandardModule').is('.bss-BetslipStandardModule_Expanded:has(.bs-AcceptButton)') ) {
+
+		//Se foi excedido o máximo da aposta
+		if ( $('.bss-Footer_MessageBody').is(':contains(maximum) ') ) {
+			$('.bs-AcceptButton').click();
+			setTimeout(function(){
+				$('.bss-PlaceBetButton').click();  
+			},100);
+		}
+		//Se não remove todas as seleções
+		else{
+			$('.bs-ControlBar_RemoveAll ').click();
+		}
+
+	}
 	//Clica no Done depois da aposta realizada
 	if( $('.bs-ReceiptContent_Done').length ) $('.bs-ReceiptContent_Done').click();
     
@@ -334,7 +347,7 @@ bot.onLoadStats=function(response){
 
 
 
-//---A cada 20 segundos
+//---A cada 30 segundos
 setInterval(function(){	
 	//Senão estiver na Tela do Inplay não faz nada 
 	if (!location.hash.includes('IP')) return;
@@ -343,7 +356,7 @@ setInterval(function(){
 	if( ( +new Date() ) - Number(localStorage.myBetsLastUpdate) >5000) return;
 	
 	
-    console.log('on20segs');
+    console.log('on30segs');
     
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
     $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats4_new.js' : 'https://bot-ao.com/stats4.js', function(){
@@ -356,7 +369,7 @@ setInterval(function(){
     });
       
     
-},20000);
+},30000);
 
 
 //Loop Principal repete todos os comandos a cada 1 segundo
@@ -380,7 +393,7 @@ setInterval(function(){
     
 
 
-},1000);
+},2000);
 
 
 
