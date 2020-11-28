@@ -75,11 +75,11 @@ function preparaTelaInPlay(){
 
 	
 	//Se o Betslip estiver minimizado clica para expandir
-	//if( $('.bss-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
-	
+	if( $('.bsm-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
+
 	
 	//Se o Betslip estiver expandido e com o botão AcceptButton sendo mostrado  clica em RemoveAll (removendo todas as seleções)
-	if( $('.bss-BetslipStandardModule').is('.bss-BetslipStandardModule_Expanded:has(.bs-AcceptButton)') ) {
+	if( $('.bsm-BetslipStandardModule').is('.bss-BetslipStandardModule_Expanded:has(.bs-AcceptButton)') ) {
 
 		//Se foi excedido o máximo da aposta
 		if ( $('.bss-Footer_MessageBody').is(':contains(maximum) ') ) {
@@ -90,18 +90,28 @@ function preparaTelaInPlay(){
 		}
 		//Se não remove todas as seleções
 		else{
-			$('.bs-ControlBar_RemoveAll ').click();
+			$('.bs-ControlBar_RemoveAll').click();
 		}
 
 	}
 	//Clica no Done depois da aposta realizada
-	if( $('.bs-ReceiptContent_Done').length ) $('.bs-ReceiptContent_Done').click();
+	if( $('.bss-ReceiptContent_Done').length ){
+		$('.bss-ReceiptContent_Done').click();
+		localStorage.aposta_feita=1;
+	}
     
 }
 
 function myBets(){
+	if (Number(localStorage.aposta_feita)==1) {
+		location.reload();
+		localStorage.aposta_feita=0;
+    }		
+
+	
+	
 	//Se não estiver fechado a tela do video, clica para fechar
-	if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();	
+	//if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();	
 	
 	//Coloca no MyBets Unsettled senão estiver
 	if( !$('.myb-MyBetsHeader_ButtonSelected').is(':contains(Unsettled)') ) $('.myb-MyBetsHeader_Button:contains(Unsettled)').click()
@@ -112,19 +122,21 @@ function myBets(){
 		
 		myBetsList.push({
 			home_v_away: $(this).find('.myb-BetParticipant_FixtureDescription').clone().children().remove().end().text(),
-			stake: Number( $(this).find('.myd-MyBetsModuleDefault_BetInformationText').text() )
+			stake: Number( /[0-9]+\.[0-9]{2}/.exec(  $(this).find('.myd-StakeDisplay_StakeWrapper').text() )[0] )
 		});
 	});
 	
 	localStorage.myBetsList=JSON.stringify(myBetsList);
 	localStorage.myBetsLastUpdate=(+new Date());
-    
+	
+	
 }
 
 
 
 function inicializa(){
-    
+    localStorage.aposta_feita=0;
+	
     //Atualiza a Regressão dinamicamente
     $.getScript('https://bot-ao.com/bet365_bot_regressao.js');
 
@@ -359,7 +371,7 @@ setInterval(function(){
     console.log('on30segs');
     
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
-    $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats4_new.js' : 'https://bot-ao.com/stats4.js', function(){
+    $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats5_new.js' : 'https://bot-ao.com/stats5.js', function(){
         bot.onLoadStats(localStorage.stats);
         //Pega o valor da banca disponível
         $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date())+'&y=OVL',function(res){ 
