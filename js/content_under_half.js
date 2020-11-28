@@ -135,7 +135,6 @@ function myBets(){
 
 
 function inicializa(){
-    localStorage.aposta_feita=0;
 	
     //Atualiza a Regressão dinamicamente
     $.getScript('https://bot-ao.com/bet365_bot_regressao.js');
