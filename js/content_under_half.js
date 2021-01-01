@@ -366,7 +366,7 @@ setInterval(function(){
     console.log('on30segs');
     
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
-    $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats6_new.js' : 'https://bot-ao.com/stats6.js', function(){
+    $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats7_new.js' : 'https://bot-ao.com/stats7.js', function(){
         bot.onLoadStats(localStorage.stats);
         //Pega o valor da banca disponível
         $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date())+'&y=OVL',function(res){ 
