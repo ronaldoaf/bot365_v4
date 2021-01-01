@@ -117,7 +117,7 @@ function myBets(){
 		if( $(this).is('.myb-OpenBetItem_Collapsed') ) $(this).find('.myb-OpenBetItem_Header').click();
 		
 		myBetsList.push({
-			home_v_away: $(this).find('.myb-BetParticipant_FixtureDescription').clone().children().remove().end().text(),
+			home_v_away: $(this).find('.myb-BetParticipant_FixtureName').text(),
 			stake: Number( /[0-9]+\.[0-9]{2}/.exec(  $(this).find('.myd-StakeDisplay_StakeWrapper').text() )[0] )
 		});
 	});
