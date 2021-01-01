@@ -20,7 +20,7 @@ function verificaSenhaSalva(){
               localStorage.senha_bet365=$('#senha').val();
 			  localStorage.usuario_bet365=$('#usuario').val();
               location.reload();
-		      chrome.runtime.sendMessage({command:'RELOAD'});	  
+		      //chrome.runtime.sendMessage({command:'RELOAD'});	  
         });
     }
 }
@@ -97,18 +97,14 @@ function preparaTelaInPlay(){
 	//Clica no Done depois da aposta realizada
 	if( $('.bss-ReceiptContent_Done').length ){
 		$('.bss-ReceiptContent_Done').click();
-		localStorage.aposta_feita=1;
+		
+		//Manda o comando para fechar a aba Mybets, para posterior recarregamento
+		chrome.runtime.sendMessage({command:'RELOAD_MB'})
 	}
     
 }
 
 function myBets(){
-	if (Number(localStorage.aposta_feita)==1) {
-		location.reload();
-		localStorage.aposta_feita=0;
-    }		
-
-	
 	
 	//Se não estiver fechado a tela do video, clica para fechar
 	//if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();	
@@ -410,12 +406,6 @@ setInterval(function(){
 
 
 
-
-
-//A cada 15 minutos recarrega a pagina
-window.setInterval(function(){
-    window.location.reload();
-},15*60*1000);
 
 
 

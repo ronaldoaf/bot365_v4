@@ -11,15 +11,14 @@ function includes_list(lista, padrao){
 }
 
 
-
+//Se Receber o comando RELOAD_MB fecha a aba Mybets
 chrome.runtime.onMessage.addListener(function(msg) {
-    if (msg.command == "RELOAD") {
+    if (msg.command == "RELOAD_MB") {
 		chrome.tabs.query({},function(tabs){
 			$(tabs).each(function(){		
 				if (
-					//this.url.includes('#/IP/') || 
-					this.url.includes('#/IP/') 
-				) chrome.tabs.reload(this.id);
+					this.url.includes('#/MB/') 
+				) chrome.tabs.remove(this.id);
 			});	
 		});
 	}
@@ -114,7 +113,7 @@ setInterval(function(){
         });		
     }		
     
-},5*60*1000);
+},15*60*1000);
 	
 	
 });
