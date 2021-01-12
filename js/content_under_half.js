@@ -230,8 +230,13 @@ bot.apostar=function(selObj, percent_da_banca){
 
 //---Toda vez que as estatisticas do arquivo JSON forem carregadas
 bot.onLoadStats=function(response){
-
    bot.apostando_agora=false;
+   
+   
+   if (localStorage.bot365_new==='1') bot.esoccer();
+   
+   
+   
    
    var jogos=JSON.parse(response);
     
@@ -247,7 +252,7 @@ bot.onLoadStats=function(response){
       
 	   
 	   $(jogos).each(function(ii,jogo){			   
-			 if (bot.apostando_agora) return;
+			 if (bot.apostando_agora) return false;
 		   
 			 if(  (ns(jogo.home)==ns(home)) && (ns(jogo.away)==ns(away)) ){
 				   
@@ -352,6 +357,42 @@ bot.onLoadStats=function(response){
 
 
 
+bot.esoccer=function(){
+	$('.ovm-Competition:contains(Esoccer Live Arena - 10 mins play) .ovm-Fixture:contains(00:00)').each(function(){
+	   var fixture=$(this);
+	   
+	   var home_r=$(this).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(0)').text();
+	   var away_r=$(this).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(1)').text();
+
+	   var home=/\((.*)\)/.exec( home_r  )[1];
+	   var away=/\((.*)\)/.exec( away_r  )[1];
+	   
+	   jogo_selecionado=bot.jogoLive(fixture);
+
+	   var goalline= jogo_selecionado.goalline;
+	   var odds=jogo_selecionado.odds_under;
+	   
+	   
+	   if( bot.jaFoiApostado(home_r+' v '+away_r) ) return;  
+	   
+	   $.getScript('https://bot-ao.com/half/get_medias_esoccer_10m.php?home='+home+'&away='+away+'&goalline='+goalline+'&odds='+odds,function(){
+			reg=Number(sessionStorage.reg);
+			console.log([away, home, reg, goalline,odds ]);
+			if (reg >= CONFIG.minimo_indice_para_apostar) {
+				var percent_da_banca=CONFIG.percentual_de_kelly*reg;              
+				if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
+				bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
+				bot.apostando_agora=true;
+				
+				return false;  //Dá break no loop foreach
+			}
+	   })
+	});	
+}
+
+
+
+
 
 
 //---A cada 30 segundos
@@ -363,8 +404,10 @@ setInterval(function(){
 	if( ( +new Date() ) - Number(localStorage.myBetsLastUpdate) >5000) return;
 	
 	
-    console.log('on30segs');
+    console.log('on20segs');
     
+	
+	
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
     $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats7_new.js' : 'https://bot-ao.com/stats7.js', function(){
         bot.onLoadStats(localStorage.stats);
@@ -376,7 +419,7 @@ setInterval(function(){
     });
       
     
-},30000);
+},20000);
 
 
 //Loop Principal repete todos os comandos a cada 1 segundo
