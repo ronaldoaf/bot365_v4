@@ -404,7 +404,7 @@ setInterval(function(){
 	if( ( +new Date() ) - Number(localStorage.myBetsLastUpdate) >5000) return;
 	
 	
-    console.log('on20segs');
+    console.log('on30segs');
     
 	
 	
@@ -419,7 +419,7 @@ setInterval(function(){
     });
       
     
-},20000);
+},30000);
 
 
 //Loop Principal repete todos os comandos a cada 1 segundo
