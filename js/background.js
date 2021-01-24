@@ -11,14 +11,34 @@ function includes_list(lista, padrao){
 }
 
 
-//Se Receber o comando RELOAD_MB fecha a aba Mybets
-chrome.runtime.onMessage.addListener(function(msg) {
+
+chrome.runtime.onMessage.addListener(function(msg,sender) {
+	//Se receber o comando CLICK clica na coordernada (msg.x, msg.y) da aba  com ID sender.tab.id
+	if (msg.command=='CLICK'){
+		var attached=false;
+		chrome.debugger.getTargets(function(targets){
+			$(targets).each(function(){
+				if( (this.attached) && (this.tabId==sender.tab.id)  ) {
+					attached=true;
+			    }
+			});
+		})
+		if(!attached) chrome.debugger.attach({tabId:sender.tab.id},'1.2', ()=>void chrome.runtime.lastError);			
+
+		chrome.debugger.sendCommand({tabId:sender.tab.id}, "Input.dispatchMouseEvent", { type: 'mousePressed',  x: msg.x, y: msg.y, button: 'left', clickCount: 1 });
+		chrome.debugger.sendCommand({tabId:sender.tab.id}, "Input.dispatchMouseEvent", { type: 'mouseReleased', x: msg.x, y: msg.y, button: 'left', clickCount: 1 });
+	}
+	if(msg.command=='KEY'){
+		chrome.debugger.sendCommand({tabId:sender.tab.id}, 'Input.dispatchKeyEvent', { type: 'keyDown', key: msg.key });
+		chrome.debugger.sendCommand({tabId:sender.tab.id}, 'Input.dispatchKeyEvent', { type: 'keyUp',   key: msg.key });
+	}
+	
+	
+	//Se Receber o comando RELOAD_MB fecha a aba Mybets
     if (msg.command == "RELOAD_MB") {
 		chrome.tabs.query({},function(tabs){
 			$(tabs).each(function(){		
-				if (
-					this.url.includes('#/MB/') 
-				) chrome.tabs.remove(this.id);
+				if (this.url.includes('#/MB/') ) chrome.tabs.remove(this.id);
 			});	
 		});
 	}
@@ -78,7 +98,8 @@ setInterval(function(){
 			$(tabs).each(function(){
 				var tab_id=this.id;
 				if (this.url.includes('#/IP/')) {
-
+					
+					
 					chrome.storage.sync.get('config', function (result) {  
 						config=result.config;
 						chrome.tabs.executeScript(tab_id, {code:"localStorage.config='"+JSON.stringify(config)+"'"});

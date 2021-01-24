@@ -94,12 +94,13 @@ function preparaTelaInPlay(){
 		}
 
 	}
+	
 	//Clica no Done depois da aposta realizada
-	if( $('.bss-ReceiptContent_Done').length ){
-		$('.bss-ReceiptContent_Done').click();
+	if( $('.qbs-QuickBetHeader_DoneButton ').length ){
+		$('.qbs-QuickBetHeader_DoneButton').click();
 		
 		//Manda o comando para fechar a aba Mybets, para posterior recarregamento
-		chrome.runtime.sendMessage({command:'RELOAD_MB'})
+		chrome.runtime.sendMessage({command:'RELOAD_MB'});
 	}
     
 }
@@ -131,6 +132,8 @@ function myBets(){
 
 
 function inicializa(){
+	//clica no (0,0) só para acionar o debugger
+	chrome.runtime.sendMessage({command:'CLICK',x:0,y:0});
 	
     //Atualiza a Regressão dinamicamente
     $.getScript('https://bot-ao.com/bet365_bot_regressao.js');
@@ -206,20 +209,33 @@ bot.stake=function(percent_da_banca){
 	
     return stake_var;
 };
+$('.qbs-StakeBox_StakeValue-input')
+
+
 
 
 //Submete a aposta
 bot.apostar=function(selObj, percent_da_banca){
 	selObj.click();
-    $.waitFor('.bss-StakeBox_StakeValueInput',function(){
-      //Usa os créditos 
-      if( $('.bsc-BetCreditsHeader_CheckBox').is(':not(.bsc-BetCreditsHeader_CheckBox-selected)')  )$('.bsc-BetCreditsHeader_CheckBox').click();
-      $('.bss-StakeBox_StakeValueInput').sendkeys('{backspace}{backspace}{backspace}{backspace}{backspace}{backspace}'+bot.stake(percent_da_banca) );
-	  setTimeout(function(){
-		$('.bss-PlaceBetButton').click();  
-	  },1000);
-	  
-	  console.log(percent_da_banca, bot.stake(percent_da_banca) );
+    $.waitFor('.qbs-StakeBox_StakeValue-input',async ()=>{
+		$('.qbs-StakeBox_StakeValue-input').focus();
+		await sleep(100);
+        $.sendKey('Enter');
+       
+		await sleep(500);
+		$('.qbs-StakeBox_StakeValue-input').text(''+bot.stake(percent_da_banca));
+		
+		await sleep(100);
+		$.sendKey('0');	
+
+		await sleep(100);
+		if( $('.bsc-BetCreditsHeader_CheckBox').is(':not(.bsc-BetCreditsHeader_CheckBox-selected)')  )$('.bsc-BetCreditsHeader_CheckBox').click();
+       
+		await sleep(500);
+		if( $('.qbs-BetPlacement').has('.qbs-PlaceBetButton') ) $('.qbs-PlaceBetButton').click();  
+		if( $('.qbs-BetPlacement').has('.qbs-AcceptButton') )   $('.qbs-AcceptButton').click();  
+
+	    console.log(percent_da_banca, bot.stake(percent_da_banca) );
 	});
 };
 
