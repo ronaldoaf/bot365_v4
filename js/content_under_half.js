@@ -411,8 +411,8 @@ bot.esoccer=function(){
 
 
 
-//---A cada 30 segundos
-setInterval(function(){	
+//---A cada 20 segundos
+setInterval( ()=>{	
 	//Senão estiver na Tela do Inplay não faz nada 
 	if (!location.hash.includes('IP')) return;
 	
@@ -420,26 +420,26 @@ setInterval(function(){
 	if( ( +new Date() ) - Number(localStorage.myBetsLastUpdate) >5000) return;
 	
 	
-    console.log('on30segs');
+    console.log('on20segs');
     
 	
 	
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
-    $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats7_new.js' : 'https://bot-ao.com/stats7.js', function(){
+    $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats7_new.js' : 'https://bot-ao.com/stats7.js', ()=>{
         bot.onLoadStats(localStorage.stats);
         //Pega o valor da banca disponível
-        $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date())+'&y=OVL',function(res){ 
+        $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date())+'&y=OVL', (res)=>{ 
             bot.balance=Number(res.split('$')[2]); 
         });
         
     });
       
     
-},30000);
+},20*1000);
 
 
 //Loop Principal repete todos os comandos a cada 1 segundo
-setInterval(function(){
+setInterval( ()=>{
 	//Atualiza configuração
 	CONFIG=JSON.parse(localStorage.config);
 	
