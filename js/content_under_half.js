@@ -95,6 +95,9 @@ function preparaTelaInPlay(){
 
 	}
 	
+	//Se aparecer o botao de Refer BetClica nele
+	if( $('.qbs-PlaceBetReferButton').length ) $('.qbs-PlaceBetReferButton').click();
+	
 	//Clica no Done depois da aposta realizada
 	if( $('.qbs-QuickBetHeader_DoneButton ').length ){
 		$('.qbs-QuickBetHeader_DoneButton').click();
@@ -167,11 +170,14 @@ bot.jogoLive=function(fixture){
 	var goal_arr=$(fixture).find('.ovm-ParticipantStackedCentered_Handicap:eq(0)').text().split(',');
 	
 	return {
+		home:$(fixture).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(0)').text(),
+		away:$(fixture).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(1)').text(),
 		tempo: Number($(fixture).find('.ovm-InPlayTimer').text().split(':')[0]),
 		goalline: goal_arr.length==2 ? ( Number(goal_arr[0])+Number(goal_arr[1]) )/2 : Number(goal_arr[0]),
 		odds_over:  Number($(fixture).find('.ovm-ParticipantStackedCentered_Odds:eq(0)').text()),
 		odds_under: Number($(fixture).find('.ovm-ParticipantStackedCentered_Odds:eq(1)').text()),
-		sel_under: $(fixture).find('.ovm-ParticipantStackedCentered:eq(1)' )
+		sel_over:  $(fixture).find('.ovm-ParticipantStackedCentered:eq(0)' ),
+		sel_under: $(fixture).find('.ovm-ParticipantStackedCentered:eq(1)' ),
 	};
 }
 
@@ -209,7 +215,7 @@ bot.stake=function(percent_da_banca){
 	
     return stake_var;
 };
-$('.qbs-StakeBox_StakeValue-input')
+//$('.qbs-StakeBox_StakeValue-input')
 
 
 
@@ -245,13 +251,14 @@ bot.apostar=function(selObj, percent_da_banca){
 
 
 //---Toda vez que as estatisticas do arquivo JSON forem carregadas
-bot.onLoadStats=function(response){
+bot.onLoadStats=async (response)=>{
    bot.apostando_agora=false;
    
    
-   if (localStorage.bot365_new==='1') bot.esoccer();
+   if (localStorage.bot365_new=='1') bot.esoccer();
    
    
+   await sleep(5*1000);
    
    
    var jogos=JSON.parse(response);
@@ -289,7 +296,7 @@ bot.onLoadStats=function(response){
 				   //console.log(jogo);
                    
 				   //Se o elemento DOM da linha do jogo 
-				   jogo_selecionado=bot.jogoLive(fixture);
+				   var jogo_selecionado=bot.jogoLive(fixture);
                    
                    if( jogo_selecionado.tempo != 45) return; 
                    
@@ -374,36 +381,51 @@ bot.onLoadStats=function(response){
 
 
 bot.esoccer=function(){
-	$('.ovm-Competition:contains(Esoccer Live Arena - 10 mins play) .ovm-Fixture:contains(00:00)').each(function(){
-	   var fixture=$(this);
-	   
-	   var home_r=$(this).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(0)').text();
-	   var away_r=$(this).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(1)').text();
-
-	   var home=/\((.*)\)/.exec( home_r  )[1];
-	   var away=/\((.*)\)/.exec( away_r  )[1];
-	   
-	   jogo_selecionado=bot.jogoLive(fixture);
-
-	   var goalline= jogo_selecionado.goalline;
-	   var odds=jogo_selecionado.odds_under;
-	   
-	   
-	   if( bot.jaFoiApostado(home_r+' v '+away_r) ) return;  
-	   
-	   $.getScript('https://bot-ao.com/half/get_medias_esoccer_10m.php?home='+home+'&away='+away+'&goalline='+goalline+'&odds='+odds,function(){
-			reg=Number(sessionStorage.reg);
-			console.log([away, home, reg, goalline,odds ]);
-			if (reg >= CONFIG.minimo_indice_para_apostar) {
-				var percent_da_banca=CONFIG.percentual_de_kelly*reg;              
-				if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
-				bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
-				bot.apostando_agora=true;
+	var esoccer_fixtures=$('.ovm-Competition:contains(Esoccer) .ovm-Fixture:contains(00:00)');
+	//var esoccer_fixtures=$('.ovm-Competition:contains(Esoccer) .ovm-Fixture');
+	
+	var jogos=[];
+	esoccer_fixtures.each((_,fixture)=>{
+		var fix=bot.jogoLive(fixture);
+		jogos.push({
+			tipo: /[0-9]+/.exec($(fixture).parents('.ovm-Competition').find('.ovm-CompetitionHeader_Name').text() )[0],
+			home:fix.home,
+			away:fix.away,		
+			goalline: fix.goalline,
+			odds_over:  fix.odds_over,
+			odds_under: fix.odds_under
+		});
+	});
+	
+	$.getScript('https://bot-ao.com/half/get_esoccer.php?jogos='+encodeURI( JSON.stringify(jogos) ),()=>{
+		console.log(sessionStorage.esoccer);
+		
+		var esoccer_regs=JSON.parse(sessionStorage.esoccer);
+		esoccer_fixtures.each((_,fixture)=>{
+			if (bot.apostando_agora) return false;
+			
+			var fix=bot.jogoLive(fixture);
+			
+			if( bot.jaFoiApostado(fix.home+' v '+fix.away) ) return; 
+			
+			$(esoccer_regs).each((_,reg)=>{
+				if ( (reg.sel !='o') && (reg.sel !='u') ) return;
 				
-				return false;  //Dá break no loop foreach
-			}
-	   })
-	});	
+				if(  (ns(reg.home)==ns(fix.home)) && (ns(reg.away)==ns(fix.away)) ){
+                    if (reg.reg >= CONFIG.minimo_indice_para_apostar) {
+						var percent_da_banca=CONFIG.percentual_de_kelly*reg.reg;              
+						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
+						bot.apostar((reg.sel=='u'?fix.sel_under:fix.sel_over), percent_da_banca );
+						bot.apostando_agora=true;
+						
+						return false;  //Dá break no loop foreach
+                    }				
+				}
+			});
+		});
+
+	});
+	
 }
 
 
@@ -426,10 +448,11 @@ setInterval( ()=>{
 	
     //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
     $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats7_new.js' : 'https://bot-ao.com/stats7.js', ()=>{
-        bot.onLoadStats(localStorage.stats);
         //Pega o valor da banca disponível
         $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date())+'&y=OVL', (res)=>{ 
             bot.balance=Number(res.split('$')[2]); 
+			
+			bot.onLoadStats(localStorage.stats);
         });
         
     });
