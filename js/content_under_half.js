@@ -45,7 +45,7 @@ function login(){
 		 $.waitFor('.lms-StandardLogin_Username',function(){
 			$('.lms-StandardLogin_Username').val(localStorage.usuario_bet365);
 			$('.lms-StandardLogin_Password ').val(localStorage.senha_bet365);
-			$('.lms-StandardLogin_LoginButton ').click();
+			$('.lms-LoginButton_Text ').click();
 		});
 	}
 	
