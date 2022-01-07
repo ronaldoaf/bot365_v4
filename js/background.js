@@ -91,6 +91,15 @@ setInterval(function(){
 			if (includes_list(tab_urls, '#/IP/') ) {
 				if (!includes_list(tab_urls, '#/MB/') ) chrome.tabs.create({url:'https://www.'+config.dominio+'/?nr=1#/MB/'});
 			}
+			
+			//Remove as abas com HO
+			$(tabs).each(function(){		
+                if (this.url.includes('#/HO/')) chrome.tabs.remove(this.id);
+            });	
+			
+			
+			
+			
         });
 		
 		
@@ -116,7 +125,7 @@ setInterval(function(){
         chrome.browserAction.setIcon({path: 'images/logo_32.png'});		
     }
     
-},4000);
+},10000);
 
 console.log('atualizou');
 //A cada 30 minutos fecha as abas para a reabertura automatica

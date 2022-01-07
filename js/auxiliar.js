@@ -4,8 +4,8 @@ function sleep(ms) {
 
 jQuery.fn.extend({
   rclick: function(){ 
-	   chrome.runtime.sendMessage({command:'CLICK',x:$(this).offset().left+1,y:$(this).offset().top+1}); 
-	   return this;
+		chrome.runtime.sendMessage({command:'CLICK',x:$(this).offset().left+1,y:$(this).offset().top+1}); 
+		return this;
   }
 });
 

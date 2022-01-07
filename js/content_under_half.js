@@ -63,21 +63,22 @@ function preparaTelaInPlay(){
 	//Se não estiver na ViewPoint Goal Line clica para mudar para ela.
 	if( $('.ovm-ClassificationMarketSwitcherMenu_Item-active').length ){
 		//Tela Grande
-		if( !$('.ovm-ClassificationMarketSwitcherMenu_Item-active').is(':contains(Goal Line)')   ) $('.ovm-ClassificationMarketSwitcherMenu_Item:contains(Goal Line)').click();
+		if( !$('.ovm-ClassificationMarketSwitcherMenu_Item-active').is(':contains(Goal Line)')   )  $('.ovm-ClassificationMarketSwitcherMenu_Item:contains(Goal Line)').rclick();
+			
 	}
 	else{
 		//Tela Pequena
 		if( !$('.ovm-ClassificationMarketSwitcherDropdownButton').is(':contains(Goal Line)') ){
 			$('.ovm-ClassificationMarketSwitcherDropdownButton').click();
-			$('.ovm-ClassificationMarketSwitcherDropdownPopup_Item:contains(:contains(Goal Line)').click();
+			$('.ovm-ClassificationMarketSwitcherDropdownItem:contains(Goal Line)').rclick();
 		}	
 	}
 
 	
 	//Se o Betslip estiver minimizado clica para expandir
-	if( $('.bsm-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
+	//if( $('.bsm-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
 
-	
+	/*
 	//Se o Betslip estiver expandido e com o botão AcceptButton sendo mostrado  clica em RemoveAll (removendo todas as seleções)
 	if( $('.bsm-BetslipStandardModule').is('.bss-BetslipStandardModule_Expanded:has(.bs-AcceptButton)') ) {
 
@@ -94,9 +95,12 @@ function preparaTelaInPlay(){
 		}
 
 	}
+
 	
 	//Se aparecer o botao de Refer BetClica nele
 	if( $('.qbs-PlaceBetReferButton').length ) $('.qbs-PlaceBetReferButton').click();
+	
+	*/
 	
 	//Clica no Done depois da aposta realizada
 	if( $('.qbs-QuickBetHeader_DoneButton ').length ){
@@ -222,24 +226,26 @@ bot.stake=function(percent_da_banca){
 
 //Submete a aposta
 bot.apostar=function(selObj, percent_da_banca){
-	selObj.click();
-    $.waitFor('.qbs-StakeBox_StakeValue-input',async ()=>{
-		$('.qbs-StakeBox_StakeValue-input').focus();
+	selObj.rclick();
+    //$.waitFor('.qbs-StakeBox_StakeValue-input',async ()=>{
+	$.waitFor('.lqb-StakeBox_StakeValue-input',async ()=>{	
+		//$('.qbs-StakeBox_StakeValue-input').focus();
+		$('.lqb-StakeBox_StakeValue-input').focus();
 		await sleep(100);
         $.sendKey('Enter');
        
 		await sleep(500);
-		$('.qbs-StakeBox_StakeValue-input').text(''+bot.stake(percent_da_banca));
+		$('.lqb-StakeBox_StakeValue-input').text(''+bot.stake(percent_da_banca));
 		
 		await sleep(100);
 		$.sendKey('0');	
 
 		await sleep(100);
-		if( $('.bsc-BetCreditsHeader_CheckBox').is(':not(.bsc-BetCreditsHeader_CheckBox-selected)')  )$('.bsc-BetCreditsHeader_CheckBox').click();
+		//if( $('.bsc-BetCreditsHeader_CheckBox').is(':not(.bsc-BetCreditsHeader_CheckBox-selected)')  )$('.bsc-BetCreditsHeader_CheckBox').click();
        
-		await sleep(500);
-		if( $('.qbs-BetPlacement').has('.qbs-PlaceBetButton') ) $('.qbs-PlaceBetButton').click();  
-		if( $('.qbs-BetPlacement').has('.qbs-AcceptButton') )   $('.qbs-AcceptButton').click();  
+		await sleep(1000);
+		if( $('.lqb-BetPlacement').has('.lqb-PlaceBetButton') ) $('.lqb-PlaceBetButton').rclick();  
+		if( $('.lqb-BetPlacement').has('.lqb-AcceptButton') )   $('.lqb-AcceptButton').rclick();  
 
 	    console.log(percent_da_banca, bot.stake(percent_da_banca) );
 	});
@@ -255,10 +261,16 @@ bot.onLoadStats=async (response)=>{
    bot.apostando_agora=false;
    
    
+   
    if (localStorage.bot365_new=='1') bot.esoccer();
    
    
    await sleep(5*1000);
+   
+	$('.ovm-Fixture').each((i,e)=>{
+		if ( $(e).find('h2').size()>0) return;
+		$('<h2 style="color:red"></h2>').insertAfter( $(e).find('.ovm-FixtureDetailsTwoWay_TeamsAndInfoWrapper') );
+	});
    
    
    var jogos=JSON.parse(response);
@@ -272,7 +284,7 @@ bot.onLoadStats=async (response)=>{
 	   var home=$(fixture).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(0)').text();
 	   var away=$(fixture).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(1)').text();
         
-      
+      $(fixture).find('h2').html('');
 	   
 	   $(jogos).each(function(ii,jogo){			   
 			 if (bot.apostando_agora) return false;
@@ -356,10 +368,13 @@ bot.onLoadStats=async (response)=>{
                     if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
 						var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds;              
 						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
-						bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
-						bot.apostando_agora=true;
+						//bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
+						//bot.apostando_agora=true;
 						
-						return false;  //Dá break no loop foreach
+						$(fixture).find('h2').html(''+(percent_da_banca*bot.balance));
+						//return false;  //Dá break no loop foreach
+						
+						
                     }
 					
 				
@@ -482,7 +497,7 @@ setInterval( ()=>{
     
 
 
-},2000);
+},3000);
 
 
 
