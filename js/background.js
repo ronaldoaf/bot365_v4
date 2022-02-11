@@ -1,4 +1,4 @@
-
+var LOGADO=false;
 
 
 function includes_list(lista, padrao){
@@ -13,26 +13,6 @@ function includes_list(lista, padrao){
 
 
 chrome.runtime.onMessage.addListener(function(msg,sender) {
-	//Se receber o comando CLICK clica na coordernada (msg.x, msg.y) da aba  com ID sender.tab.id
-	if (msg.command=='CLICK'){
-		var attached=false;
-		chrome.debugger.getTargets(function(targets){
-			$(targets).each(function(){
-				if( (this.attached) && (this.tabId==sender.tab.id)  ) {
-					attached=true;
-			    }
-			});
-		})
-		if(!attached) chrome.debugger.attach({tabId:sender.tab.id},'1.2', ()=>void chrome.runtime.lastError);			
-
-		chrome.debugger.sendCommand({tabId:sender.tab.id}, "Input.dispatchMouseEvent", { type: 'mousePressed',  x: msg.x, y: msg.y, button: 'left', clickCount: 1 });
-		chrome.debugger.sendCommand({tabId:sender.tab.id}, "Input.dispatchMouseEvent", { type: 'mouseReleased', x: msg.x, y: msg.y, button: 'left', clickCount: 1 });
-	}
-	if(msg.command=='KEY'){
-		chrome.debugger.sendCommand({tabId:sender.tab.id}, 'Input.dispatchKeyEvent', { type: 'keyDown', key: msg.key });
-		chrome.debugger.sendCommand({tabId:sender.tab.id}, 'Input.dispatchKeyEvent', { type: 'keyUp',   key: msg.key });
-	}
-	
 	
 	//Se Receber o comando RELOAD_MB fecha a aba Mybets
     if (msg.command == "RELOAD_MB") {
@@ -48,7 +28,9 @@ chrome.runtime.onMessage.addListener(function(msg,sender) {
 		//console.log(JSON.parse(msg.parm1));
 	}
 	
-	
+    if (msg.command == "LOGADO") LOGADO=true;
+     
+    if (msg.command == "NAO_LOGADO") LOGADO=false;
 	
 	
 });
@@ -82,13 +64,14 @@ setInterval(function(){
         tab_urls=[];
         chrome.tabs.query({},function(tabs){			
             $(tabs).each(function(){
-                tab_urls.push(this.url);		
+                tab_urls.push(this.url);	
+				if( this.url.includes('#/IP/') ) chrome.tabs.update(this.id, {selected: true});
             });	
 			//Se a aba do Inplay não estiver aberta, abre-a
             if (!includes_list(tab_urls, '#/IP/') ) chrome.tabs.create({url:'https://www.'+config.dominio+'/?nr=1#/IP/'});
 			
-			//Se já estiver aberta verfica a do MyBets
-			if (includes_list(tab_urls, '#/IP/') ) {
+			//Se já estiver logado verfica  aba do MyBets
+			if (LOGADO) {
 				if (!includes_list(tab_urls, '#/MB/') ) chrome.tabs.create({url:'https://www.'+config.dominio+'/?nr=1#/MB/'});
 			}
 			

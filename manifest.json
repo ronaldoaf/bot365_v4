@@ -13,7 +13,7 @@
    },
    "manifest_version":2,
    "name": "Bot365 v4",
-   "permissions": [ "storage","webNavigation","tabs","https://www.bet365.com/*","https://www.365sport365.com/*","http://bot-ao.com/*", "webRequest","webRequestBlocking","debugger" ],
+   "permissions": [ "storage","webNavigation","tabs","https://www.bet365.com/*","https://www.365sport365.com/*","http://bot-ao.com/*", "webRequest","webRequestBlocking"],
    "version": "1.10.0",
    "web_accessible_resources": [ "images/*" ],
    "background": {
@@ -26,6 +26,5 @@
       "js": ["js/jquery-2.1.4.min.js","js/auxiliar.js","js/content_under_half.js"],
 	  "all_frames":true
     }
-
   ]
 }

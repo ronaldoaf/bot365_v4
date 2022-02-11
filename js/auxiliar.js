@@ -4,10 +4,14 @@ function sleep(ms) {
 
 jQuery.fn.extend({
   rclick: function(){ 
-		chrome.runtime.sendMessage({command:'CLICK',x:$(this).offset().left+1,y:$(this).offset().top+1}); 
+		const x=$(this).offset().left+13 + window.screenX;
+		const y=$(this).offset().top+85+window.screenY;
+		$.getScript('http://localhost:1313/click?y='+y+'&x='+x);
 		return this;
   }
+
 });
+
 
 $.sendKey=(key)=>{
 	chrome.runtime.sendMessage({command:'KEY',key:key}); 

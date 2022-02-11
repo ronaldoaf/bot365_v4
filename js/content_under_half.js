@@ -29,30 +29,42 @@ function verificaSenhaSalva(){
 
 
 function login(){
+
 	//Se as credenciais não forem definidas não faz nada
 	if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ) return;
 	
 	//Se estiver mostrando algum usuario esta logado
-	var logado=($('.hm-MainHeaderMembersWide_MembersMenuIcon').length==1);
-	
+	var logado=($('.hm-MainHeaderMembersNarrow_MembersMenuIcon').length==1);
+   
 	//Se estiver logado Beleza, se não continua para tentar realizar o login
-	if(logado )return;  
-	
-	//Se o popup de login não estiver aparecendo clica no botão Log In, para que apareça
-	if( $('.lms-StandardLogin_Username').length==0)  {
-		//Espera até que o popup aparece e então preenche com as credenciais e tenta o login
-		$('.hm-MainHeaderRHSLoggedOutWide_Login ').click();
-		 $.waitFor('.lms-StandardLogin_Username',function(){
-			$('.lms-StandardLogin_Username').val(localStorage.usuario_bet365);
-			$('.lms-StandardLogin_Password ').val(localStorage.senha_bet365);
-			$('.lms-LoginButton_Text ').click();
-		});
+	if(logado ) {
+		//Manda a mensagem informando que está logado
+		chrome.runtime.sendMessage({command:'LOGADO'});
+      return;  
 	}
+   else{
+      chrome.runtime.sendMessage({command:'NAO_LOGADO'});
+      
+   }
+	//Se o popup de login não estiver aparecendo clica no botão Log In, para que apareça
+	if( $('.lms-StandardLogin_Username').length==0)  $('.hm-MainHeaderRHSLoggedOutNarrow_Login').click();
+   
+   //Espera até que o popup aparece e então preenche com as credenciais e tenta o login
+   $('.hm-MainHeaderRHSLoggedOutNarrow_Login').click();
+    $.waitFor('.lms-StandardLogin_Username',function(){
+      $('.lms-StandardLogin_Username').val(localStorage.usuario_bet365);
+      $('.lms-StandardLogin_Password ').val(localStorage.senha_bet365);
+      $('.lms-LoginButton_Text ').click();
+   });
+	
 	
 }
 
 
-function preparaTelaInPlay(){
+const preparaTelaInPlay=async()=>{
+   //Reseta o scroll da página
+   window.scrollTo(0,0);
+   
 	//Se não estiver da tela do Futebol (Soccer) muda para a tela Soccer
 	if( !$('.ovm-ClassificationBarButton-active').is('.ovm-ClassificationBarButton-1') ) $('.ovm-ClassificationBarButton-1').click();
 	
@@ -70,10 +82,14 @@ function preparaTelaInPlay(){
 		//Tela Pequena
 		if( !$('.ovm-ClassificationMarketSwitcherDropdownButton').is(':contains(Goal Line)') ){
 			$('.ovm-ClassificationMarketSwitcherDropdownButton').click();
+			await sleep(500);
 			$('.ovm-ClassificationMarketSwitcherDropdownItem:contains(Goal Line)').rclick();
 		}	
 	}
 
+	
+	if( $('.lqb-QuickBetHeader_DoneButton').size() ) $('.lqb-QuickBetHeader_DoneButton').click();
+	
 	
 	//Se o Betslip estiver minimizado clica para expandir
 	//if( $('.bsm-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
@@ -118,7 +134,7 @@ function myBets(){
 	//if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();	
 	
 	//Coloca no MyBets Unsettled senão estiver
-	if( !$('.myb-MyBetsHeader_ButtonSelected').is(':contains(Unsettled)') ) $('.myb-MyBetsHeader_Button:contains(Unsettled)').click()
+	if( !$('.myb-HeaderButton-selected').is(':contains(Unsettled)') ) $('.myb-HeaderButton:contains(Unsettled)').click();
 	
     myBetsList=[];
 	$('.myb-OpenBetItem').each(function(){ 
@@ -139,8 +155,6 @@ function myBets(){
 
 
 function inicializa(){
-	//clica no (0,0) só para acionar o debugger
-	chrome.runtime.sendMessage({command:'CLICK',x:0,y:0});
 	
     //Atualiza a Regressão dinamicamente
     $.getScript('https://bot-ao.com/bet365_bot_regressao.js');
@@ -222,33 +236,36 @@ bot.stake=function(percent_da_banca){
 //$('.qbs-StakeBox_StakeValue-input')
 
 
-
+bot.type=(string)=>{
+	$.getScript('http://localhost:1313/type?string='+string);
+};
 
 //Submete a aposta
 bot.apostar=function(selObj, percent_da_banca){
-	selObj.rclick();
-    //$.waitFor('.qbs-StakeBox_StakeValue-input',async ()=>{
-	$.waitFor('.lqb-StakeBox_StakeValue-input',async ()=>{	
-		//$('.qbs-StakeBox_StakeValue-input').focus();
-		$('.lqb-StakeBox_StakeValue-input').focus();
-		await sleep(100);
-        $.sendKey('Enter');
-       
-		await sleep(500);
-		$('.lqb-StakeBox_StakeValue-input').text(''+bot.stake(percent_da_banca));
-		
-		await sleep(100);
-		$.sendKey('0');	
+	selObj.click();
 
-		await sleep(100);
-		//if( $('.bsc-BetCreditsHeader_CheckBox').is(':not(.bsc-BetCreditsHeader_CheckBox-selected)')  )$('.bsc-BetCreditsHeader_CheckBox').click();
-       
+	
+	$.waitFor('.lqb-StakeBox_StakeValue-input',async ()=>{	
+		await sleep(500);
+		$('.lqb-StakeBox_StakeInput').rclick()
+		
+		console.log('funfou');
 		await sleep(1000);
+		
+		bot.type(''+bot.stake(percent_da_banca));
+		await sleep(5000);
+		//if( $('.lqb-RememberStakeButtonNonTouch').hasClass('lqb-RememberStakeButtonNonTouch-active') ) $('.lqb-RememberStakeButtonNonTouch').rclick();
+
+
 		if( $('.lqb-BetPlacement').has('.lqb-PlaceBetButton') ) $('.lqb-PlaceBetButton').rclick();  
 		if( $('.lqb-BetPlacement').has('.lqb-AcceptButton') )   $('.lqb-AcceptButton').rclick();  
 
 	    console.log(percent_da_banca, bot.stake(percent_da_banca) );
+		
+	  
 	});
+	
+	
 };
 
 
@@ -261,16 +278,10 @@ bot.onLoadStats=async (response)=>{
    bot.apostando_agora=false;
    
    
-   
    if (localStorage.bot365_new=='1') bot.esoccer();
    
    
    await sleep(5*1000);
-   
-	$('.ovm-Fixture').each((i,e)=>{
-		if ( $(e).find('h2').size()>0) return;
-		$('<h2 style="color:red"></h2>').insertAfter( $(e).find('.ovm-FixtureDetailsTwoWay_TeamsAndInfoWrapper') );
-	});
    
    
    var jogos=JSON.parse(response);
@@ -284,7 +295,7 @@ bot.onLoadStats=async (response)=>{
 	   var home=$(fixture).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(0)').text();
 	   var away=$(fixture).find('.ovm-FixtureDetailsTwoWay_TeamName:eq(1)').text();
         
-      $(fixture).find('h2').html('');
+      
 	   
 	   $(jogos).each(function(ii,jogo){			   
 			 if (bot.apostando_agora) return false;
@@ -368,13 +379,10 @@ bot.onLoadStats=async (response)=>{
                     if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
 						var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds;              
 						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
-						//bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
-						//bot.apostando_agora=true;
+						bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
+						bot.apostando_agora=true;
 						
-						$(fixture).find('h2').html(''+(percent_da_banca*bot.balance));
-						//return false;  //Dá break no loop foreach
-						
-						
+						return false;  //Dá break no loop foreach
                     }
 					
 				
@@ -391,8 +399,6 @@ bot.onLoadStats=async (response)=>{
    
    
 };  
-
-
 
 
 bot.esoccer=function(){
