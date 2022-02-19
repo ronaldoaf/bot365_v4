@@ -61,6 +61,7 @@ function login(){
 }
 
 
+
 const preparaTelaInPlay=async()=>{
    //Reseta o scroll da página
    window.scrollTo(0,0);
@@ -88,7 +89,7 @@ const preparaTelaInPlay=async()=>{
 	}
 
 	
-	if( $('.lqb-QuickBetHeader_DoneButton').size() ) $('.lqb-QuickBetHeader_DoneButton').click();
+	if( $('.bss-ReceiptContent_Done').size() ) $('.bss-ReceiptContent_Done').click();
 	
 	
 	//Se o Betslip estiver minimizado clica para expandir
@@ -245,20 +246,20 @@ bot.apostar=function(selObj, percent_da_banca){
 	selObj.click();
 
 	
-	$.waitFor('.lqb-StakeBox_StakeValue-input',async ()=>{	
+	$.waitFor('.bsf-StakeBox_StakeValue-input',async ()=>{	
 		await sleep(500);
-		$('.lqb-StakeBox_StakeInput').rclick()
+		$('.bsf-StakeBox_StakeInput').rclick()
 		
 		console.log('funfou');
 		await sleep(1000);
 		
 		bot.type(''+bot.stake(percent_da_banca));
-		await sleep(5000);
+		await sleep(4000);
 		//if( $('.lqb-RememberStakeButtonNonTouch').hasClass('lqb-RememberStakeButtonNonTouch-active') ) $('.lqb-RememberStakeButtonNonTouch').rclick();
 
 
-		if( $('.lqb-BetPlacement').has('.lqb-PlaceBetButton') ) $('.lqb-PlaceBetButton').rclick();  
-		if( $('.lqb-BetPlacement').has('.lqb-AcceptButton') )   $('.lqb-AcceptButton').rclick();  
+		if( $('.bsf-BetPlacement').has('.bsf-PlaceBetButton') ) $('.bsf-PlaceBetButton').rclick();  
+		if( $('.bsf-BetPlacement').has('.bsf-AcceptButton') )   $('.bsf-AcceptButton').rclick();  
 
 	    console.log(percent_da_banca, bot.stake(percent_da_banca) );
 		
