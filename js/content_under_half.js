@@ -279,7 +279,7 @@ bot.onLoadStats=async (response)=>{
    bot.apostando_agora=false;
    
    
-   if (localStorage.bot365_new=='1') bot.esoccer();
+   //if (localStorage.bot365_new=='1') bot.esoccer();
    
    
    await sleep(5*1000);
