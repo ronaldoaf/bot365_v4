@@ -13,7 +13,12 @@
    },
    "manifest_version":2,
    "name": "Bot365 v4",
-   "permissions": [ "storage","webNavigation","tabs","https://www.bet365.com/*","https://www.365sport365.com/*","http://bot-ao.com/*", "webRequest","webRequestBlocking"],
+   "permissions": [ 
+      "storage","webNavigation","tabs","http://bot-ao.com/*","webRequest","webRequestBlocking",
+      "https://www.bet365.com/*","https://www.365sport365.com/*","https://www.allsport365.com/*","https://www.bet-mart.com/*",
+      "https://www.365sb.com/*","https://www.game-365.com/*","https://www.288365.com/*",
+      "https://www.365838.com/*","https://www.365-808.com/*","https://www.288sb.com/*"
+    ],
    "version": "1.11.1",
    "web_accessible_resources": [ "images/*" ],
    "background": {
@@ -21,10 +26,16 @@
   },
    "content_scripts": [
     {
-      "matches": ["https://www.bet365.com/*","https://www.365sport365.com/*" ],
+      "matches": [
+         "https://www.bet365.com/*","https://www.365sport365.com/*","https://www.allsport365.com/*","https://www.bet-mart.com/*",
+         "https://www.365sb.com/*","https://www.game-365.com/*","https://www.288365.com/*",
+         "https://www.365838.com/*","https://www.365-808.com/*","https://www.288sb.com/*"
+      ],
       "css": ["css/content.css"],
       "js": ["js/jquery-2.1.4.min.js","js/auxiliar.js","js/content_under_half.js"],
 	  "all_frames":true
     }
   ]
 }
+
+

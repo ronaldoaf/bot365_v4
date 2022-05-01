@@ -33,6 +33,12 @@ chrome.runtime.onMessage.addListener(function(msg,sender) {
     if (msg.command == "NAO_LOGADO") LOGADO=false;
 	
 	
+   
+    if (msg.command == "TEST") {
+       chrome.tabs.executeScript(sender.tab.id,{
+          code: "document.getElementById('anycaptchaSolveButton').onclick('"+ msg.parm1+"')", 
+        });
+    };
 });
 
 

@@ -13,6 +13,7 @@ $.storageItem=function(chave, valor){
 
 
 function verificaSenhaSalva(){
+    
     if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ){
         
         $('body').html('<center><br><div style="font-size:18px; border:1px solid"><br><p>Digite o seu usuário da Bet365</p><br><input id="usuario" /><br><p>Digite a sua senha da Bet365</p><br><input id="senha" /><button id="salvar_senha">Salvar</button><br><br></div></center>');
@@ -28,7 +29,7 @@ function verificaSenhaSalva(){
 
 
 
-function login(){
+async function login(){
 
 	//Se as credenciais não forem definidas não faz nada
 	if((localStorage.senha_bet365==undefined) || (localStorage.senha_bet365=='') ) return;
@@ -46,11 +47,15 @@ function login(){
       chrome.runtime.sendMessage({command:'NAO_LOGADO'});
       
    }
+   
 	//Se o popup de login não estiver aparecendo clica no botão Log In, para que apareça
 	if( $('.lms-StandardLogin_Username').length==0)  $('.hm-MainHeaderRHSLoggedOutNarrow_Login').click();
+   await sleep(2000);
+   
    
    //Espera até que o popup aparece e então preenche com as credenciais e tenta o login
    $('.hm-MainHeaderRHSLoggedOutNarrow_Login').click();
+    await sleep(2000);
     $.waitFor('.lms-StandardLogin_Username',function(){
       $('.lms-StandardLogin_Username').val(localStorage.usuario_bet365);
       $('.lms-StandardLogin_Password ').val(localStorage.senha_bet365);
@@ -63,15 +68,18 @@ function login(){
 
 
 const preparaTelaInPlay=async()=>{
+   var logado=($('.hm-MainHeaderMembersNarrow_MembersMenuIcon').length==1);
+   
+   if (logado==false) return;
+   
    //Reseta o scroll da página
-   window.scrollTo(0,0);
+   //window.scrollTo(0,0);
    
 	//Se não estiver da tela do Futebol (Soccer) muda para a tela Soccer
-	if( !$('.ovm-ClassificationBarButton-active').is('.ovm-ClassificationBarButton-1') ) $('.ovm-ClassificationBarButton-1').click();
-	
-	//Se não estiver fechado a tela do video, clica para fechar
-	if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();
-
+	if( !$('.ovm-ClassificationBarButton-active').is('.ovm-ClassificationBarButton-1') ) {
+      $('.ovm-ClassificationBarButton-1').rclick();
+      await sleep(1000);
+	}
 
 	//Se não estiver na ViewPoint Goal Line clica para mudar para ela.
 	if( $('.ovm-ClassificationMarketSwitcherMenu_Item-active').length ){
@@ -82,16 +90,28 @@ const preparaTelaInPlay=async()=>{
 	else{
 		//Tela Pequena
 		if( !$('.ovm-ClassificationMarketSwitcherDropdownButton').is(':contains(Goal Line)') ){
-			$('.ovm-ClassificationMarketSwitcherDropdownButton').click();
-			await sleep(500);
+			$('.ovm-ClassificationMarketSwitcherDropdownButton').rclick();
+			await sleep(1000);
 			$('.ovm-ClassificationMarketSwitcherDropdownItem:contains(Goal Line)').rclick();
 		}	
 	}
 
 	
-	if( $('.bss-ReceiptContent_Done').size() ) $('.bss-ReceiptContent_Done').click();
+	if( $('.bss-ReceiptContent_Done').size() ) {
+      $.getScript('http://localhost:1313/token/free');
+      $('.bss-ReceiptContent_Done').rclick();
+	}
+   //Remove o botão Remember stake
+   if( $('.bsf-RememberStakeButtonNonTouch').size() ) $('.bsf-RememberStakeButtonNonTouch ').remove();
 	
-	
+   
+   
+   const BetslipPreferences=JSON.parse(localStorage.BetslipPreferences);
+   if (BetslipPreferences.rememberQuickBetStake) {
+      BetslipPreferences.rememberQuickBetStake=false;
+      BetslipPreferences.rememberedQuickBetStake="";
+      localStorage.BetslipPreferences=JSON.stringify(BetslipPreferences);
+   }
 	//Se o Betslip estiver minimizado clica para expandir
 	//if( $('.bsm-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
 
@@ -119,13 +139,7 @@ const preparaTelaInPlay=async()=>{
 	
 	*/
 	
-	//Clica no Done depois da aposta realizada
-	if( $('.qbs-QuickBetHeader_DoneButton ').length ){
-		$('.qbs-QuickBetHeader_DoneButton').click();
-		
-		//Manda o comando para fechar a aba Mybets, para posterior recarregamento
-		chrome.runtime.sendMessage({command:'RELOAD_MB'});
-	}
+
     
 }
 
@@ -238,29 +252,44 @@ bot.stake=function(percent_da_banca){
 
 
 bot.type=(string)=>{
-	$.getScript('http://localhost:1313/type?string='+string);
+	$.getScript('http://localhost:1313/type?str='+string);
 };
 
 //Submete a aposta
 bot.apostar=function(selObj, percent_da_banca){
-	selObj.click();
+   $.getScript('http://localhost:1313/token/hold');
+   
+   
+  //Pega o valor da banca disponível
+  $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date())+'&y=OVL', (res)=>bot.balance=Number(res.split('$')[2]) ); 
+      
 
+   
+	$(selObj).rclick();
 	
 	$.waitFor('.bsf-StakeBox_StakeValue-input',async ()=>{	
-		await sleep(500);
-		$('.bsf-StakeBox_StakeInput').rclick()
+
+      
+		await sleep(4000);
+		$('.bsf-StakeBox_StakeInput').rclick(  );
+		//$('.bsf-StakeBox_StakeInput').rclick(  );
+      
+		//console.log('funfou');
+		await sleep(2000);
 		
-		console.log('funfou');
-		await sleep(1000);
-		
+      
 		bot.type(''+bot.stake(percent_da_banca));
 		await sleep(4000);
 		//if( $('.lqb-RememberStakeButtonNonTouch').hasClass('lqb-RememberStakeButtonNonTouch-active') ) $('.lqb-RememberStakeButtonNonTouch').rclick();
-
-
-		if( $('.bsf-BetPlacement').has('.bsf-PlaceBetButton') ) $('.bsf-PlaceBetButton').rclick();  
-		if( $('.bsf-BetPlacement').has('.bsf-AcceptButton') )   $('.bsf-AcceptButton').rclick();  
-
+   
+      //Se o botão para aceitar alteração não estiver aparecendo então click no PlaceBet, senão clica no Accept
+      if( $('.bsf-AcceptButton').is('.Hidden') ){
+         $('.bsf-PlaceBetButton').rclick(); 
+      }
+      else{
+         $('.bsf-AcceptButton').rclick();
+      }
+       
 	    console.log(percent_da_banca, bot.stake(percent_da_banca) );
 		
 	  
@@ -283,7 +312,6 @@ bot.onLoadStats=async (response)=>{
    
    
    await sleep(5*1000);
-   
    
    var jogos=JSON.parse(response);
     
@@ -377,14 +405,18 @@ bot.onLoadStats=async (response)=>{
 
 			
 					
-                    if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
-						var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds;              
-						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
-						bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
-						bot.apostando_agora=true;
-						
-						return false;  //Dá break no loop foreach
-                    }
+                  if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
+                     var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds;              
+                     if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
+                     $.getScript('http://localhost:1313/token/state', ()=>{
+                        if (localStorage.token_state=='free'){
+                           bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
+                           bot.apostando_agora=true;
+                        }
+                     });  
+                     
+                     return false;  //Dá break no loop foreach
+                  }
 					
 				
 					
@@ -403,6 +435,8 @@ bot.onLoadStats=async (response)=>{
 
 
 bot.esoccer=function(){
+   /*
+   
 	var esoccer_fixtures=$('.ovm-Competition:contains(Esoccer) .ovm-Fixture:contains(00:00)');
 	//var esoccer_fixtures=$('.ovm-Competition:contains(Esoccer) .ovm-Fixture');
 	
@@ -447,41 +481,125 @@ bot.esoccer=function(){
 		});
 
 	});
+   
+   
+   */
 	
 }
 
 
 
 
-
-
-//---A cada 20 segundos
-setInterval( ()=>{	
+const cicloApostas=async()=>{
 	//Senão estiver na Tela do Inplay não faz nada 
 	if (!location.hash.includes('IP')) return;
 	
+   
 	//Se a aba myBets não foi atualiza nos últimos 5 segundos sai;
 	if( ( +new Date() ) - Number(localStorage.myBetsLastUpdate) >5000) return;
-	
-	
-    console.log('on20segs');
-    
-	
-	
-    //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
-    $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats7_new.js' : 'https://bot-ao.com/stats7.js', ()=>{
-        //Pega o valor da banca disponível
-        $.get('https://www.'+CONFIG.dominio+'/balancedataapi/pullbalance?rn='+(+new Date())+'&y=OVL', (res)=>{ 
-            bot.balance=Number(res.split('$')[2]); 
-			
-			bot.onLoadStats(localStorage.stats);
-        });
-        
-    });
-      
-    
-},20*1000);
+   
+   $.getScript('http://localhost:1313/token/state', ()=>{
+      if (localStorage.token_state=='free'){
+         console.log('on15segs');
 
+          //Faz um ajax para o arquivo JSONP "http://aposte.me/live/stats4.js  que executará a função bot.onLoadStats()"
+          $.getScript(localStorage.bot365_new==='1'? 'https://bot-ao.com/stats7_new.js' : 'https://bot-ao.com/stats7.js', ()=>{
+             bot.onLoadStats(localStorage.stats);  
+          });
+      }
+      
+   });    
+   
+}
+
+//---A cada ciclo de 15 a 25 segundos verifica as condições e faz aposta se for o caso
+(async()=>{
+   while(1){
+      await sleep( Math.floor(15000+Math.random()*10000 ) );
+      cicloApostas();
+   }
+})();
+
+
+
+/*
+//Retorna torna uma recaptcha resolvida
+const recaptcha=async()=>{
+	const capmoster_key='38db769aea1328d11346ff98fff44216';
+   
+	//Solicita a quebra do captcha
+	const capCreateTask=async()=>fetch("https://api.capmonster.cloud/createTask", {
+	  headers: {
+		'content-type': 'application/json',
+	  },
+	  body:  JSON.stringify({
+		'clientKey': capmoster_key,
+		'task': {
+			'type': "HCaptchaTaskProxyless",
+			'websiteURL': location.href,
+			'websiteKey': "03196e24-ce02-40fc-aa86-4d6130e1c97a"
+		}
+	  }),
+	  method: "POST",
+	}).then(r=>r.json()).then(r=>r.taskId);
+
+
+	//Pega a captcha resolvida
+	const capGetTaskResult=async(taskId)=>fetch("https://api.capmonster.cloud/getTaskResult", {
+	  headers: {
+		'content-type': 'application/json',
+	  },
+	  body:  JSON.stringify({
+		  'clientKey': capmoster_key,
+		  'taskId': taskId
+	  }),
+	  method: "POST",
+	}).then(r=>r.json());	
+
+	
+	
+	
+	const taskId=await capCreateTask();
+	
+	let result, cont=0;
+	while(1){
+		await sleep(2000);
+		result=await capGetTaskResult(taskId);
+		if (result.status=='ready') break;
+		if (cont>=100) break;
+		cont+=1;
+	}
+	return result.solution.gRecaptchaResponse;
+};
+
+
+
+
+
+
+let captcha=false;
+async function captchaTest(){
+   //console.log(new Date, 'wax');
+   if( ($('h1[data-translate="challenge_headline"]').size()>0) && (captcha==false) )  {
+      captcha=true
+      
+      console.log('Resolvendo Captcha');
+      await sleep(10000);
+      console.log('Ok')
+      //console.log('b', $('#anycaptchaSolveButton').size() );
+      
+      const result=await recaptcha();
+      console.log( result );
+      localStorage.captcha=result;
+      document.getElementById('anycaptchaSolveButton').onclick(result);
+   }
+
+   if ($('h1[data-translate="challenge_headline"]').size()==0) captcha=false;
+   
+   
+}
+
+*/
 
 //Loop Principal repete todos os comandos a cada 1 segundo
 setInterval( ()=>{
@@ -502,7 +620,16 @@ setInterval( ()=>{
 		myBets();
 	}
     
-
+   
+   /*
+	if (location.pathname.includes('hcaptcha-challenge.html')){
+      //console.log(location.ancestorOrigins[0]);
+		captchaTest();
+      //return;
+      //chrome.runtime.sendMessage({command:'TEST'});	  
+	}
+    */
+   
 
 },3000);
 

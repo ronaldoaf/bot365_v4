@@ -3,13 +3,48 @@ function sleep(ms) {
 }
 
 jQuery.fn.extend({
-  rclick: function(){ 
-		const x=$(this).offset().left+13 + window.screenX;
-		const y=$(this).offset().top+85+window.screenY;
-		$.getScript('http://localhost:1313/click?y='+y+'&x='+x);
-		return this;
-  }
+   rclick: function(shift={}){
+      //const dx2='x2' in shift  ? shift.x2 : 0;
+      
+      const [wX, wY] = [window.screenX, window.screenY];
+      const [dX, dY] = [window.outerWidth -window.innerWidth, window.outerHeight -window.innerHeight];
+      
+      const [minY, maxY]=[wY-8+dY+1,  wY-8+window.outerHeight];
+      
+      const el=$(this);
+      
+      function ret(){
+         const [eX, eY] = [$(el).offset().left, $(el).offset().top];
+         const [sX, sY] = [window.scrollX, window.scrollY];
 
+         const x1=Math.ceil(eX-sX+wX+dX/2);
+         const y1=Math.ceil(eY-sY+wY+dY-8);
+         const x2=x1+$(el).width()-1;
+         const y2=y1+$(el).height()-1;
+         
+         
+         const step=(num)=>(num<0?-1:1)*Math.ceil(Math.abs(num)/233)*233;
+
+
+        // if (y1<minY) window.scrollBy(0,minY-y1)
+        if (y1<minY) {
+           window.scrollBy(0,step(y1-minY));
+           return ret();
+        }    
+        
+        if (y2>maxY) {
+           window.scrollBy(0,step(y2-maxY)); 
+           return ret();
+        }
+
+         return {x1:x1, y1:y1, x2:x2, y2:y2};
+      }
+     
+      const {x1,y1,x2,y2}=ret();
+      $.getScript('http://localhost:1313/click_area?x1='+x1+'&y1='+y1+'&x2='+x2+'&y2='+y2);
+      
+      return this;
+   }
 });
 
 
