@@ -24,7 +24,7 @@ $(document).ready(function() {
 	$('#apaga').click(function(){
 		chrome.tabs.query({},function(tabs){
 			$(tabs).each(function(){		
-				if (this.url.includes('151014714C1_1_3')) chrome.tabs.executeScript(this.id, {code:"localStorage.removeItem('usuario_bet365');  localStorage.removeItem('senha_bet365');  "});
+				if (this.url.includes('151014714C1_1_3')) chrome.scripting.executeScript(this.id, {code:"localStorage.removeItem('usuario_bet365');  localStorage.removeItem('senha_bet365');  "});
 			});
 		});	
 
