@@ -394,9 +394,23 @@ bot.onLoadStats=async (response)=>{
 					
 
                     
-                    eval(localStorage.FORMULA2);
+                    //eval(localStorage.FORMULA2);
 	               
                    
+					let scale={
+						data_min_: [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5, 1.375, 1.4, 0.0, 0.0, -17.380297483911036],
+						data_max_:  [8.0, 7.0, 28.0, 17.0, 302.0, 134.0, 78.0, 5.75, 7.75, 2.85, 2.9, 1.0, 4.3694478524670215, 8.934701464457216],
+						transform: X=>X.map((e,i)=>(e-scale.data_min_[i])/(scale.data_max_[i] -scale.data_min_[i]) )
+						
+						
+					}
+					let model={
+						parms0:[0.01969145, -0.36099684, -0.2857934 ,  0.0079565 , -0.12194901,-0.08681313, -1.5068841 , -0.16126443,  1.315353  , -0.36033922, -0.12399185,  0.05949843,  0.23880917, -0.79717696],
+						parms1:0.66546047,
+						eval_: X=>Math.tanh(X.map((e,i)=>e*model.parms0[i]).reduce((a,b)=>a+b) + model.parms1)
+					}   
+				   
+				   plU_por_odds=model.eval_(scale.transform([s_g, d_g, s_c, d_c, s_da, d_da, s_s, hand, goal_diff, oddsO, oddsU, W, L1, X]));
 				   
 				   
                    console.log([home, away, plU_por_odds]);
