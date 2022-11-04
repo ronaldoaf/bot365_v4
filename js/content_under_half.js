@@ -268,6 +268,10 @@ bot.apostar=function(selObj, percent_da_banca){
 	$(selObj).rclick();
 	
 	$.waitFor('.bsf-StakeBox_StakeValue-input',async ()=>{	
+   
+      //await sleep(1000);
+      //Usa o Bonus se tiver
+      //if(!$('.bsc-BetCreditsHeader_Condensed .bsc-BetCreditsHeader_CheckBox').is('.bsc-BetCreditsHeader_CheckBox-selected') ) $('.bsc-BetCreditsHeader_Condensed .bsc-BetCreditsHeader_CheckBox').rclick();
 
       
 		await sleep(4000);
@@ -277,10 +281,16 @@ bot.apostar=function(selObj, percent_da_banca){
 		//console.log('funfou');
 		await sleep(2000);
 		
+            //await sleep(1000);
+  
       
 		bot.type(''+bot.stake(percent_da_banca));
-		await sleep(4000);
+		await sleep(3000);
 		//if( $('.lqb-RememberStakeButtonNonTouch').hasClass('lqb-RememberStakeButtonNonTouch-active') ) $('.lqb-RememberStakeButtonNonTouch').rclick();
+   
+     //Usa o Bonus se tiver
+      if(!$('.bsc-BetCreditsHeader_Condensed .bsc-BetCreditsHeader_CheckBox').is('.bsc-BetCreditsHeader_CheckBox-selected') ) $('.bsc-BetCreditsHeader_Condensed .bsc-BetCreditsHeader_CheckBox').rclick();
+      await sleep(2000);
    
       //Se o botão para aceitar alteração não estiver aparecendo então click no PlaceBet, senão clica no Accept
       if( $('.bsf-AcceptButton').is('.Hidden') ){
