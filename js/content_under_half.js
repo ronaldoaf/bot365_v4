@@ -336,7 +336,7 @@ bot.onLoadStats=async (response)=>{
         
       
 	   
-	   $(jogos).each(function(ii,jogo){			   
+	   $(jogos).each(async function(ii,jogo){			   
 			 if (bot.apostando_agora) return false;
 		   
 			 if(  (ns(jogo.home)==ns(home)) && (ns(jogo.away)==ns(away)) ){
@@ -432,12 +432,14 @@ bot.onLoadStats=async (response)=>{
                   if (plU_por_odds >= CONFIG.minimo_indice_para_apostar) {
                      var percent_da_banca=CONFIG.percentual_de_kelly*plU_por_odds;              
                      if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
-                     $.getScript('http://localhost:1313/token/state', ()=>{
-                        if (localStorage.token_state=='free'){
-                           bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
-                           bot.apostando_agora=true;
-                        }
-                     });  
+                     
+                     
+                    // let token_stake=await new Promise(resolve => $.getScript('http://localhost:1313/token/state', ()=> resolve(localStorage.token_state) ) );
+                     
+                     //if (token_stake=='free'){
+                        bot.apostar(jogo_selecionado.sel_under, percent_da_banca );
+                        bot.apostando_agora=true;
+                     //}
                      
                      return false;  //Dá break no loop foreach
                   }
