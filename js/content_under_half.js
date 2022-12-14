@@ -292,12 +292,12 @@ bot.apostar=function(selObj, percent_da_banca){
       if(!$('.bsc-BetCreditsHeader_Condensed .bsc-BetCreditsHeader_CheckBox').is('.bsc-BetCreditsHeader_CheckBox-selected') ) $('.bsc-BetCreditsHeader_Condensed .bsc-BetCreditsHeader_CheckBox').rclick();
       await sleep(2000);
    
-      //Se o botão para aceitar alteração não estiver aparecendo então click no PlaceBet, senão clica no Accept
+      //Se o botão para aceitar alteração não estiver aparecendo então click no PlaceBet, senão clica no X para remover as seleções
       if( $('.bsf-AcceptButton').is('.Hidden') ){
          $('.bsf-PlaceBetButton').rclick(); 
       }
       else{
-         $('.bsf-AcceptButton').rclick();
+         $('.bss-RemoveButton').rclick();
       }
        
 	    console.log(percent_da_banca, bot.stake(percent_da_banca) );
@@ -403,7 +403,9 @@ bot.onLoadStats=async (response)=>{
 					W=j.W;
 					
 
-                    
+
+
+                    //console.log([s_g,s_c,s_da,s_s,s_r]);
                     //eval(localStorage.FORMULA2);
 	               
                    
