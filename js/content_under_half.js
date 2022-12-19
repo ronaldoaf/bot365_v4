@@ -406,9 +406,9 @@ bot.onLoadStats=async (response)=>{
 
 
                     //console.log([s_g,s_c,s_da,s_s,s_r]);
-                    //eval(localStorage.FORMULA2);
+                    eval(localStorage.FORMULA2);
 	               
-                   
+                   /*
 					let scale={
 						data_min_: [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5, 1.375, 1.4, 0.0, 0.0, -17.380297483911036],
 						data_max_:  [8.0, 7.0, 28.0, 17.0, 302.0, 134.0, 78.0, 5.75, 7.75, 2.85, 2.9, 1.0, 4.3694478524670215, 8.934701464457216],
@@ -423,7 +423,7 @@ bot.onLoadStats=async (response)=>{
 					}   
 				   
 				   plU_por_odds=model.eval_(scale.transform([s_g, d_g, s_c, d_c, s_da, d_da, s_s, hand, goal_diff, oddsO, oddsU, W, L1, X]));
-				   
+				   */
 				   
                    console.log([home, away, plU_por_odds]);
                     
