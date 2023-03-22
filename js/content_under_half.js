@@ -236,7 +236,7 @@ bot.stake=function(percent_da_banca){
 		const m=lx-e < Math.log10(2) ? 1 : (lx-e < Math.log10(5) ? 2 : 5);
 		const s=10**(e-1)*m;
 		return Math.floor((x+s/10)/s)*s;
-	}
+	};
 	
 	myBetsList=JSON.parse(localStorage.myBetsList);
     
