@@ -229,6 +229,15 @@ bot.jaFoiApostado=function(home_v_away){
 
 //Calucla o stake a partir do percentual da banca 
 bot.stake=function(percent_da_banca){
+	
+	const round125=(x)=>{
+		const lx=Math.log10(x);
+		const e=Math.floor(lx);
+		const m=lx-e < Math.log10(2) ? 1 : (lx-e < Math.log10(5) ? 2 : 5);
+		const s=10**(e-1)*m;
+		return Math.floor((x+s/10)/s)*s;
+	}
+	
 	myBetsList=JSON.parse(localStorage.myBetsList);
     
     var soma=0;
@@ -246,7 +255,7 @@ bot.stake=function(percent_da_banca){
     var stake_var=Number((soma*percent_da_banca).toFixed(2));
     if (stake_var<0.5) stake_var=0.5;
 	
-    return stake_var;
+    return round125(stake_var);
 };
 //$('.qbs-StakeBox_StakeValue-input')
 
