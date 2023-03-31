@@ -46,7 +46,8 @@ $(document).ready(function() {
 				minimo_indice_fim_de_semana:0.02,
 				percentual_de_kelly:0.5,
 				maximo_da_banca_por_aposta:0.12,
-				redutor:0.95
+				redutor:0.95,
+				aposta_maxima:10000
 			};		
 			chrome.storage.sync.set({config:config});		
 			
