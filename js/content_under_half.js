@@ -254,6 +254,7 @@ bot.stake=function(percent_da_banca){
 	
     var stake_var=Number((soma*percent_da_banca).toFixed(2));
     if (stake_var<0.5) stake_var=0.5;
+    if (stake_var>CONFIG.aposta_maxima) stake_var=CONFIG.aposta_maxima;
 	
     return round125(stake_var);
 };
