@@ -472,12 +472,15 @@ bot.onLoadStats=async (response)=>{
 };  
 
 
-bot.esoccer=function(){
-   /*
+bot.esoccer=async()=>{
+   $.getScript('https://bot-ao.com/half/stats_e.js');
+   await sleep(1000);
    
-	var esoccer_fixtures=$('.ovm-Competition:contains(Esoccer) .ovm-Fixture:contains(00:00)');
+	var esoccer_fixtures=$('.ovm-Competition:contains(Esoccer) .ovm-Fixture:contains(00:00)')
 	//var esoccer_fixtures=$('.ovm-Competition:contains(Esoccer) .ovm-Fixture');
-	
+
+   var jogos=JSON.parse(localStorage.stats_e);
+
 	var jogos=[];
 	esoccer_fixtures.each((_,fixture)=>{
 		var fix=bot.jogoLive(fixture);
@@ -491,6 +494,11 @@ bot.esoccer=function(){
 		});
 	});
 	
+	
+	
+	
+	console.log(jogos);
+	/*
 	$.getScript('https://bot-ao.com/half/get_esoccer.php?jogos='+encodeURI( JSON.stringify(jogos) ),()=>{
 		console.log(sessionStorage.esoccer);
 		
