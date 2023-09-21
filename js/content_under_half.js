@@ -473,6 +473,8 @@ bot.onLoadStats=async (response)=>{
 
 
 bot.esoccer=async()=>{
+   bot.apostando_agora=false;
+	
    $.getScript('https://bot-ao.com/half/stats_e.js');
    await sleep(1000);
    
