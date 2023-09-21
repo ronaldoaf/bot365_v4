@@ -502,38 +502,39 @@ bot.esoccer=async()=>{
 	
 	
 	console.log(jogos);
-	/*
-	$.getScript('https://bot-ao.com/half/get_esoccer.php?jogos='+encodeURI( JSON.stringify(jogos) ),()=>{
-		console.log(sessionStorage.esoccer);
+	for( let j of jogos){
+		if( bot.jaFoiApostado(j.home+' v '+j.away) ) continue; 
 		
-		var esoccer_regs=JSON.parse(sessionStorage.esoccer);
-		esoccer_fixtures.each((_,fixture)=>{
-			if (bot.apostando_agora) return false;
-			
-			var fix=bot.jogoLive(fixture);
-			
-			if( bot.jaFoiApostado(fix.home+' v '+fix.away) ) return; 
-			
-			$(esoccer_regs).each((_,reg)=>{
-				if ( (reg.sel !='o') && (reg.sel !='u') ) return;
+		for (let e of stats_e){
+			if ((j.home.includes(e.home.nome)) && (j.away.includes(e.away.nome)) ){
+				let gph=e.home.medias.gp;
+				let gch=e.home.medias.gc;
+				let daph=e.home.medias.dap;
+				let dach=e.home.medias.dac;
+				let eh=e.home.medias.eh;
 				
-				if(  (ns(reg.home)==ns(fix.home)) && (ns(reg.away)==ns(fix.away)) ){
-                    if (reg.reg >= CONFIG.minimo_indice_para_apostar) {
-						var percent_da_banca=CONFIG.percentual_de_kelly*reg.reg;              
-						if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
-						bot.apostar((reg.sel=='u'?fix.sel_under:fix.sel_over), percent_da_banca );
-						bot.apostando_agora=true;
-						
-						return false;  //Dá break no loop foreach
-                    }				
-				}
-			});
-		});
+				let gpa=e.away.medias.gp;
+				let gca=e.away.medias.gc;
+				let dapa=e.away.medias.dap;
+				let daca=e.away.medias.dac;
+				let ea=e.away.medias.eh;
+				
+				
+				eval(localStorage.FORMULA_E);
 
-	});
-   
-   
-   */
+				console.log([j.home, j.away,  plU_por_oddsE]);
+				
+				if (plU_por_oddsE >= CONFIG.minimo_indice_para_apostar) {
+					let percent_da_banca=CONFIG.percentual_de_kelly*plU_por_oddsE;              
+					if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
+					bot.apostar(j.sel_over, percent_da_banca );
+					bot.apostando_agora=true;
+					break;
+	            		}
+			}
+			if( bot.apostando_agora==true ) break;
+		}
+	}
 	
 }
 
