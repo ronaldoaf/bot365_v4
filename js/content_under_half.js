@@ -490,7 +490,9 @@ bot.esoccer=async()=>{
 			away:fix.away,		
 			goalline: fix.goalline,
 			odds_over:  fix.odds_over,
-			odds_under: fix.odds_under
+			odds_under: fix.odds_under,
+			sel_over:fix.sel_over,
+			sel_under:fix.sel_under
 		});
 	});
 	
