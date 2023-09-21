@@ -571,7 +571,7 @@ const cicloApostas=async()=>{
    }
 })();
 
-
+setInterval( ()=>bot.esoccer(), 15*1000 );
 
 /*
 //Retorna torna uma recaptcha resolvida
