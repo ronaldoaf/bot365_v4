@@ -389,6 +389,7 @@ bot.onLoadStats=async (response)=>{
                     d_c=Math.abs(j.cH-j.cA);
                     d_da=Math.abs(j.daH-j.daA);
                     d_s=Math.abs( j.sH-j.sA);
+					gl_0=j.gl_0;
 					s_r=j.sr;
                     goal=goalline;
                     goal_diff=goalline-s_g;
