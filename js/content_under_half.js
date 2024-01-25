@@ -106,6 +106,12 @@ const preparaTelaInPlay=async()=>{
 	
    
    
+   //Popup ofertas
+   if ( $('.pm-FreeBetsPushGraphicCloseIcon').size()==1 ) $('.pm-FreeBetsPushGraphicCloseIcon').rclick();
+   
+   //Accept cookies
+   if ( $('.ccm-CookieConsentPopup_Accept').size()==1 )  $('.ccm-CookieConsentPopup_Accept').rclick();
+   
    const BetslipPreferences=JSON.parse(localStorage.BetslipPreferences);
    if (BetslipPreferences.rememberQuickBetStake) {
       BetslipPreferences.rememberQuickBetStake=false;
