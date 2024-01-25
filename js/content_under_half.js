@@ -107,7 +107,7 @@ const preparaTelaInPlay=async()=>{
    
    
    //Popup ofertas
-   if ( $('.pm-FreeBetsPushGraphicCloseIcon').size()==1 ) $('.pm-FreeBetsPushGraphicCloseIcon').rclick();
+   if ( $('.pm-FreeBetsPushGraphicCloseIcon').size()==1 ) $('.pm-FreeBetsPushGraphicCloseIcon').click();
    
    //Accept cookies
    if ( $('.ccm-CookieConsentPopup_Accept').size()==1 )  $('.ccm-CookieConsentPopup_Accept').rclick();
@@ -118,32 +118,7 @@ const preparaTelaInPlay=async()=>{
       BetslipPreferences.rememberedQuickBetStake="";
       localStorage.BetslipPreferences=JSON.stringify(BetslipPreferences);
    }
-	//Se o Betslip estiver minimizado clica para expandir
-	//if( $('.bsm-BetslipStandardModule').is('.bss-BetslipStandardModule_Minimised') ) $('.bss-DefaultContent').click();
 
-	/*
-	//Se o Betslip estiver expandido e com o botão AcceptButton sendo mostrado  clica em RemoveAll (removendo todas as seleções)
-	if( $('.bsm-BetslipStandardModule').is('.bss-BetslipStandardModule_Expanded:has(.bs-AcceptButton)') ) {
-
-		//Se foi excedido o máximo da aposta
-		if ( $('.bss-Footer_MessageBody').is(':contains(maximum) ') ) {
-			$('.bs-AcceptButton').click();
-			setTimeout(function(){
-				$('.bss-PlaceBetButton').click();  
-			},100);
-		}
-		//Se não remove todas as seleções
-		else{
-			$('.bs-ControlBar_RemoveAll').click();
-		}
-
-	}
-
-	
-	//Se aparecer o botao de Refer BetClica nele
-	if( $('.qbs-PlaceBetReferButton').length ) $('.qbs-PlaceBetReferButton').click();
-	
-	*/
 	
 
     
@@ -151,9 +126,7 @@ const preparaTelaInPlay=async()=>{
 
 function myBets(){
 	
-	//Se não estiver fechado a tela do video, clica para fechar
-	//if( !$('.lv-ClosableTabView').is('.lv-ClosableTabView_Closed') ) $('.lv-ClosableTabView_Button').click();	
-	
+
 	//Coloca no MyBets Unsettled senão estiver
 	if( !$('.myb-HeaderButton-selected').is(':contains(Unsettled)') ) $('.myb-HeaderButton:contains(Unsettled)').click();
 	
@@ -396,26 +369,14 @@ bot.onLoadStats=async (response)=>{
                     d_da=Math.abs(j.daH-j.daA);
                     d_s=Math.abs( j.sH-j.sA);
 					gl_0=j.gl_0;
+					
 					s_r=j.sr;
                     goal=goalline;
                     goal_diff=goalline-s_g;
                     oddsU=1.0*j_sel.odds_under;
 					oddsO=1.0*j_sel.odds_over;
-                    probU=probUnder;
-                    probU_diff=Math.abs( probUnder-0.5 );
-                    mod0=Number(goalline%1==0);
-                    mod25=Number(goalline%1==0.25);
-                    mod50=Number(goalline%1==0.50);
-                    mod75=Number(goalline%1==0.75);
-                   
                     X=s_g/Math.log(s_s+0.75);
-                    Y=Math.pow(s_s,1.5);
 					L1=Math.log(1+s_s);
-					L2=Math.log(1+L1);
-					L3=Math.log(1+L2);
-					
-					M1=Math.log(1+goal_diff);
-					
 					hand=Math.abs(j.handicap);
 					W=j.W;
 					
@@ -425,23 +386,6 @@ bot.onLoadStats=async (response)=>{
                     //console.log([s_g,s_c,s_da,s_s,s_r]);
                     eval(localStorage.FORMULA2);
 	               
-                   /*
-					let scale={
-						data_min_: [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5, 1.375, 1.4, 0.0, 0.0, -17.380297483911036],
-						data_max_:  [8.0, 7.0, 28.0, 17.0, 302.0, 134.0, 78.0, 5.75, 7.75, 2.85, 2.9, 1.0, 4.3694478524670215, 8.934701464457216],
-						transform: X=>X.map((e,i)=>(e-scale.data_min_[i])/(scale.data_max_[i] -scale.data_min_[i]) )
-						
-						
-					}
-					let model={
-						parms0:[0.01969145, -0.36099684, -0.2857934 ,  0.0079565 , -0.12194901,-0.08681313, -1.5068841 , -0.16126443,  1.315353  , -0.36033922, -0.12399185,  0.05949843,  0.23880917, -0.79717696],
-						parms1:0.66546047,
-						eval_: X=>Math.tanh(X.map((e,i)=>e*model.parms0[i]).reduce((a,b)=>a+b) + model.parms1)
-					}   
-				   
-				   plU_por_odds=model.eval_(scale.transform([s_g, d_g, s_c, d_c, s_da, d_da, s_s, hand, goal_diff, oddsO, oddsU, W, L1, X]));
-				   */
-				   
                    console.log([home, away, plU_por_odds]);
                     
                     
@@ -479,72 +423,6 @@ bot.onLoadStats=async (response)=>{
 };  
 
 
-bot.esoccer=async()=>{
-   bot.apostando_agora=false;
-	
-   $.getScript('https://bot-ao.com/half/stats_e.js');
-   await sleep(1000);
-   
-	var esoccer_fixtures=$('.ovm-Competition:contains(Esoccer) .ovm-Fixture:contains(00:00)')
-	//var esoccer_fixtures=$('.ovm-Competition:contains(Esoccer) .ovm-Fixture');
-
-   var jogos=JSON.parse(localStorage.stats_e);
-
-	var jogos=[];
-	esoccer_fixtures.each((_,fixture)=>{
-		var fix=bot.jogoLive(fixture);
-		jogos.push({
-			tipo: /[0-9]+/.exec($(fixture).parents('.ovm-Competition').find('.ovm-CompetitionHeader_Name').text() )[0],
-			home:fix.home,
-			away:fix.away,		
-			goalline: fix.goalline,
-			odds_over:  fix.odds_over,
-			odds_under: fix.odds_under,
-			sel_over:fix.sel_over,
-			sel_under:fix.sel_under
-		});
-	});
-	
-	
-	
-	
-	console.log(jogos);
-	for( let j of jogos){
-		if( bot.jaFoiApostado(j.home+' v '+j.away) ) continue; 
-		
-		for (let e of stats_e){
-			if ((j.home.includes(e.home.nome)) && (j.away.includes(e.away.nome)) ){
-				let gph=e.home.medias.gp;
-				let gch=e.home.medias.gc;
-				let daph=e.home.medias.dap;
-				let dach=e.home.medias.dac;
-				let eh=e.home.medias.eh;
-				
-				let gpa=e.away.medias.gp;
-				let gca=e.away.medias.gc;
-				let dapa=e.away.medias.dap;
-				let daca=e.away.medias.dac;
-				let ea=e.away.medias.eh;
-				
-				
-				eval(localStorage.FORMULA_E);
-
-				console.log([j.home, j.away,  plU_por_oddsE]);
-				
-				if (plU_por_oddsE >= CONFIG.minimo_indice_para_apostar) {
-					let percent_da_banca=CONFIG.percentual_de_kelly*plU_por_oddsE;              
-					if (percent_da_banca >  CONFIG.maximo_da_banca_por_aposta) percent_da_banca=CONFIG.maximo_da_banca_por_aposta;
-					bot.apostar(j.sel_over, percent_da_banca );
-					bot.apostando_agora=true;
-					break;
-	            		}
-			}
-			if( bot.apostando_agora==true ) break;
-		}
-	}
-	
-}
-
 
 
 
@@ -578,86 +456,9 @@ const cicloApostas=async()=>{
    }
 })();
 
-setInterval( ()=>bot.esoccer(), 15*1000 );
-
-/*
-//Retorna torna uma recaptcha resolvida
-const recaptcha=async()=>{
-	const capmoster_key='38db769aea1328d11346ff98fff44216';
-   
-	//Solicita a quebra do captcha
-	const capCreateTask=async()=>fetch("https://api.capmonster.cloud/createTask", {
-	  headers: {
-		'content-type': 'application/json',
-	  },
-	  body:  JSON.stringify({
-		'clientKey': capmoster_key,
-		'task': {
-			'type': "HCaptchaTaskProxyless",
-			'websiteURL': location.href,
-			'websiteKey': "03196e24-ce02-40fc-aa86-4d6130e1c97a"
-		}
-	  }),
-	  method: "POST",
-	}).then(r=>r.json()).then(r=>r.taskId);
-
-
-	//Pega a captcha resolvida
-	const capGetTaskResult=async(taskId)=>fetch("https://api.capmonster.cloud/getTaskResult", {
-	  headers: {
-		'content-type': 'application/json',
-	  },
-	  body:  JSON.stringify({
-		  'clientKey': capmoster_key,
-		  'taskId': taskId
-	  }),
-	  method: "POST",
-	}).then(r=>r.json());	
-
-	
-	
-	
-	const taskId=await capCreateTask();
-	
-	let result, cont=0;
-	while(1){
-		await sleep(2000);
-		result=await capGetTaskResult(taskId);
-		if (result.status=='ready') break;
-		if (cont>=100) break;
-		cont+=1;
-	}
-	return result.solution.gRecaptchaResponse;
-};
 
 
 
-
-
-
-let captcha=false;
-async function captchaTest(){
-   //console.log(new Date, 'wax');
-   if( ($('h1[data-translate="challenge_headline"]').size()>0) && (captcha==false) )  {
-      captcha=true
-      
-      console.log('Resolvendo Captcha');
-      await sleep(10000);
-      console.log('Ok')
-      //console.log('b', $('#anycaptchaSolveButton').size() );
-      
-      const result=await recaptcha();
-      console.log( result );
-      localStorage.captcha=result;
-      document.getElementById('anycaptchaSolveButton').onclick(result);
-   }
-
-   if ($('h1[data-translate="challenge_headline"]').size()==0) captcha=false;
-   
-   
-}
-
-*/
 
 //Loop Principal repete todos os comandos a cada 1 segundo
 setInterval( ()=>{
@@ -678,15 +479,7 @@ setInterval( ()=>{
 		myBets();
 	}
     
-   
-   /*
-	if (location.pathname.includes('hcaptcha-challenge.html')){
-      //console.log(location.ancestorOrigins[0]);
-		captchaTest();
-      //return;
-      //chrome.runtime.sendMessage({command:'TEST'});	  
-	}
-    */
+
    
 
 },3000);
