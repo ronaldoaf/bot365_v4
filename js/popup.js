@@ -1,68 +1,26 @@
+const $=(q)=>document.querySelector(q);
 
-$(document).ready(function() {
-	chrome.storage.sync.get('bot_ligado', function(obj) { 
-		
-		if (obj.bot_ligado==true) $('#cmn-toggle-1').prop('checked', true);
-	
+chrome.storage.local.get(['config','bot_ligado','click_type'], VARS=> {
+   
+   //Se deixa checkado se o bot estiver ligado
+   $('#cmn-toggle-1').checked=VARS.bot_ligado;
+   
+   //Preenche a textarea com JSON da configuração
+   $('#config').value=JSON.stringify(VARS.config,null,4);
 
-	});
-	
+   //Se o usuario e senha forem alterados esconde o aviso
+   if ((VARS.config.usuario!='usuario') && (VARS.config.senha!='senha')) $('#aviso1').style.display='none';
+   
+   //Esconde o aviso da falta de funcionamento do clickType
+   if(VARS.click_type) $('#aviso2').style.display='none';
+   
+   //Esconde o aviso da licença se essa for alterada
+   if (VARS.config.licenca!='00000000-0000') $('#aviso3').style.display='none';
+   
+   //Preeche a váriavel do bot_ligado conforme o valor do checkbox
+   $("#cmn-toggle-1").onchange=(event)=> chrome.storage.local.set( {bot_ligado: event.target.checked} );
+   
+   //Ao clicar botão salva a configuração
+   $('#salva').onclick=()=>chrome.storage.local.set( {config:JSON.parse( $('#config').value) }) ;
 
-	$("#cmn-toggle-1").change(function() {
-		if(this.checked) {
-			chrome.storage.sync.set({bot_ligado: true});
-			//chrome.browserAction.setIcon({32: 'images/logo_32_verde.png'});
-		}
-		else{
-			chrome.storage.sync.set({bot_ligado: false});
-			//chrome.browserAction.setIcon({32: 'images/logo_32.png'});
-		}
-	});
-	
-	
-	
-	$('#apaga').click(function(){
-		chrome.tabs.query({},function(tabs){
-			$(tabs).each(function(){		
-				if (this.url.includes('151014714C1_1_3')) chrome.scripting.executeScript(this.id, {code:"localStorage.removeItem('usuario_bet365');  localStorage.removeItem('senha_bet365');  "});
-			});
-		});	
-
-		setTimeout(function(){
-			chrome.runtime.sendMessage({command:'RELOAD'});			
-		},1000);
-			
-		
-	});
-	
-	var config;
-	
-	chrome.storage.sync.get('config', function (result) {  
-		
-		if ($.isEmptyObject(result)) {			
-			config={	
-                dominio: "365sport365.com",
-				minimo_indice_para_apostar:0.02,
-				minimo_indice_fim_de_semana:0.02,
-				percentual_de_kelly:0.5,
-				maximo_da_banca_por_aposta:0.12,
-				redutor:0.95,
-				aposta_maxima:10000
-			};		
-			chrome.storage.sync.set({config:config});		
-			
-		} else{
-			config=result.config;	
-		}
-
-		$('#config').val(JSON.stringify(config,null,4)  );
-	});
-	
-	
-	
-	$('#salva').click(function(){
-		console.log('foi');
-		chrome.runtime.sendMessage({command:'SALVA_CONFIG', parm1: $('#config').val()  });
-	});	
-	
 });

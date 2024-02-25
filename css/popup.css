@@ -6,6 +6,15 @@ hr {
 	border-top: 3px double #8c8b8b;
 
 }
+.aviso{
+   background-color: red;
+   color: white;
+   padding-top: 12px;
+   padding-bottom: 12px;
+   margin: 7px;
+   font-size:18px;
+   font-weight: bold;
+}
 
 .cmn-toggle {
   position: absolute;
