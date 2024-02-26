@@ -214,13 +214,21 @@ const jaFoiApostado=(home,away)=>VARS.my_bets.map(b=>b.home_v_away).includes(`${
 
 
 const calcIndex=(pos)=>{
-   const home=$$('.ovm-Fixture')[pos].$$('.ovm-FixtureDetailsTwoWay_TeamName')[0].innerText;
-   const away=$$('.ovm-Fixture')[pos].$$('.ovm-FixtureDetailsTwoWay_TeamName')[1].innerText;
+   const fixture=$$('.ovm-Fixture')[pos];
    
-   const goalline=calcHand($$('.ovm-Fixture')[pos].$$('.ovm-ParticipantStackedCentered_Handicap')[1].innerText); 
-   const oddsU=Number($$('.ovm-Fixture')[pos].$$('.ovm-ParticipantStackedCentered_Odds')[1].innerText); 
+   //Se odds estiver suspensa retorna -1
+   if (fixture.$$('.ovm-ParticipantStackedCentered_Suspended').length >0 ) return -1;
    
+   
+   const home=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[0].innerText;
+   const away=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[1].innerText;
+   const goalline=calcHand(fixture.$$('.ovm-ParticipantStackedCentered_Handicap')[1].innerText); 
+   const oddsU=Number(fixture.$$('.ovm-ParticipantStackedCentered_Odds')[1].innerText); 
+   
+   //Procura a stat corresponde a esse jogo
    const stats=VARS.stats.filter(e=>e.home==home && e.away==away);
+   
+   //Se não encontrar a stats correspodente retorna -1
    if (stats.length==0) return -1;
    
    const {gH,gA,cH,cA,daH,daA,sH,sA,handicap,W,gl_0}=stats[0];
