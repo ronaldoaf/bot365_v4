@@ -255,10 +255,10 @@ const calcIndex=(pos)=>{
 
 }
 
-
+//Lista todos os que está em 45:00 e calcula o índice para apostar
 const getMatchList=()=>[...$$('.ovm-Fixture')].map((e,i)=>({
       pos:i,
-      timer:e.$('.ovm-FixtureDetailsTwoWay_Timer').innerText,
+      timer:e.$('.ovm-FixtureDetailsTwoWay_Timer, .ovm-InPlayTimer').innerText,
       home:e.$$('.ovm-FixtureDetailsTwoWay_TeamName')[0].innerText,
       away:e.$$('.ovm-FixtureDetailsTwoWay_TeamName')[1].innerText,
    })).filter(e=>e.timer=='45:00')
