@@ -201,9 +201,12 @@ const updateMyBets=()=>{
    chrome.storage.local.set({my_bets:  VARS.my_bets } );
 }
    
-//Envia o envento para baixar as stats
+//Envia o evento para baixar as stats
 const getStats=async()=> await sendEvent('stats',{});
- 
+
+//Envia o evento para baixar o Model
+const getModel=async()=> await sendEvent('model',{});
+
  
 //Checa dse já foi apostasdo
 const jaFoiApostado=(home,away)=>VARS.my_bets.map(b=>b.home_v_away).includes(`${home} v ${away}` );
@@ -467,8 +470,13 @@ const main=async()=>{
 
 
 
-//Loop a cada 10 segundos
+
 (async()=>{
+   
+   await getModel();
+   
+   
+   //Loop a cada 10 segundos
    while(true) try{
    
       //Seta as váriaveis

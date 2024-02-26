@@ -13,8 +13,6 @@ const inList=(list, str)=>list.map(e=>e.includes(str)).reduce((a,b)=>a||b);
 
 
 
-
-
 const checkTabs=()=>{
    if (VARS.bot_ligado==false) return;
    
@@ -123,6 +121,15 @@ chrome.runtime.onMessage.addListener(async(msg,sender)=>{
          console.log(e);
       }
    });
+   if (msg.command =='model') await action(async()=>{
+      try{
+         const MODEL=await fetch1('https://bot-ao.com/model.php').then(r=>r.json());
+         chrome.storage.local.set({MODEL}); 
+      } catch(e){
+         console.log(e);
+      }
+   });
+   
    
    
 });
@@ -141,16 +148,7 @@ const ping=async()=>{
 
 //=========================================================================================================
 
-(async()=>{
-   const MODEL=await fetch1('https://bot-ao.com/model.php').then(r=>r.json());
-   chrome.storage.local.set({MODEL}); 
-   
-   await ping();
-   
-   setVars();
-   
-   
-})();
+
 
 
 
