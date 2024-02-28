@@ -238,9 +238,17 @@ const calcIndex=(pos)=>{
    const hand=Math.abs(handicap);
    const goal_diff=goalline-s_g;
    
+   
+   //Funcões de ativação não lineares
+   const funcs=(f)=>({
+      tanh: Math.tanh,
+      hardswish: x=>x<-3?0:(x>3?x: x*(x+3)/6),
+   })[f];
+   
+   
    //Faz a médias dos modelos MODEL
    const avgModel = (MODEL, input_data) => {
-      const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => eval(model["1.func"])(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => eval(model["3.func"])(e))), X[0]);
+      const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => funcs(model["1.func"])(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => funcs(model["3.func"])(e))), X[0]);
       return X = MODEL.scale.map((x => (input_data[x.name] - x.min) / (x.max - x.min))), MODEL.models.map((x => evalModel(x, X))).reduce(((x, a) => x + a)) / MODEL.models.length
    };
        
