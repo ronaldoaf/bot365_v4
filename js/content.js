@@ -190,7 +190,7 @@ const doLogin=async()=>{
 
 
  const getBalance=async()=>{
-   const balance=Number(/[0-9.]+/.exec( $('.hm-Balance').innerText  )[0]); 
+   const balance=Number(/[0-9.]+/.exec( $('.hm-Balance').innerText.split(',').join('')  )[0]); 
    chrome.storage.local.set({balance:balance});
    VARS.balance=balance;
  };
