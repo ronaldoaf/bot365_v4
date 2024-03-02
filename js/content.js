@@ -365,12 +365,15 @@ const apostar=async(pos, stake)=>{
    //Extrai a descrição do jogo da aposta feita
    const home_v_away=$('.bss-NormalBetItem_FixtureDescription').innerText;
    
+   const tipo='u';
+   
    //Adiciona a variável my_bets para controle do que já foi apostado
    VARS.my_bets.push({
       home_v_away,
       stake,
       gl,
       odds,
+      tipo,
       timestamp: +new Date(),
    });
    chrome.storage.local.set({my_bets:  VARS.my_bets } );
