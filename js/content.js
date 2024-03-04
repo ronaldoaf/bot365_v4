@@ -438,7 +438,7 @@ const preReq=async()=>{
    
    //Seleciona o mercado Goal Line In-Play, caso não esteja selecionado
    const market_switcher=$('.ovm-ClassificationMarketSwitcherDropdownButton');
-   if( !['Goal Line In-Play','Gols Mais/Menos - Ao-Vivo'].includes(market_switcher.innerText) ){
+   if(market_switcher.innerText.substr(0,2) != 'Go' ){
       await market_switcher.rscroll();
       await sleep(1*sec);
       await market_switcher.rclick();
