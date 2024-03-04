@@ -190,8 +190,9 @@ const doLogin=async()=>{
 
 
  const getBalance=async()=>{
-   const balance=Number(/[0-9.]+/.exec( $('.hm-Balance').innerText.split(',').join('')  )[0]); 
-   chrome.storage.local.set({balance:balance});
+   //Procura por números, remove os pontos e as vírgulas e divide por 100
+   const balance=Number(/[0-9.,]+/.exec( $('.hm-Balance').innerText )[0].replace(/[.,]/g,'') )/100; 
+   chrome.storage.local.set({balance});
    VARS.balance=balance;
  };
 
@@ -437,7 +438,7 @@ const preReq=async()=>{
    
    //Seleciona o mercado Goal Line In-Play, caso não esteja selecionado
    const market_switcher=$('.ovm-ClassificationMarketSwitcherDropdownButton');
-   if(market_switcher.innerText != 'Goal Line In-Play' ){
+   if( !['Goal Line In-Play','Gols Mais/Menos - Ao-Vivo'].includes(market_switcher.innerText) ){
       await market_switcher.rscroll();
       await sleep(1*sec);
       await market_switcher.rclick();
