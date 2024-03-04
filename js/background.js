@@ -12,6 +12,29 @@ const inList=(list, str)=>list.map(e=>e.includes(str)).reduce((a,b)=>a||b);
 
 
 
+//Checa se está no período de atividade
+const atActiveInt= ()=>{
+	const now=new Date();
+	
+	//Transtorma um horário no formato hh:mm em milisegundos a partir dá 00:00
+	const timeToMsecs=(t)=>(Number(t.substr(0,2))*60+Number(t.substr(3,2)))*60*1000;
+	
+	//00:00 do dia atual em unix timestamp
+	const h0=Math.floor(+now/1000/60/60/24)*1000*60*60*24;
+	
+	//Chave corresponde ao dia da semana atual
+	const day=Object.keys(VARS.config.z_active)[now.getUTCDay()];
+
+	//Lê a string do intervalo e transfoma em um array de timestamps
+	const active_intervals=VARS.config.z_active[day].replaceAll(' ','').split(',').map(e=> ({inicio:h0+timeToMsecs(e.split('-')[0]),fim:h0+timeToMsecs(e.split('-')[1])}));
+
+	//Testar de o horário atual entra dentro de algum instervalo
+	return active_intervals.map(e=>+now >=e.inicio  && +now <=e.fim).reduce((a,b)=>a||b);
+}
+
+
+
+
 
 const checkTabs=()=>{
    if (VARS.bot_ligado==false) return;
@@ -167,11 +190,13 @@ setInterval(()=>{
 setInterval(()=>{
    ping();
    
-   checkTabs();
+   //Se estiver no periodo de atividade checa as abas
+   if( atActiveInt() ) checkTabs();
 
 }, 5*1000);
 
 
+//A cada 30 segundos fecha as abas para serem reaberta depois
 setInterval(renewTabs, 30*60*1000);
 
 

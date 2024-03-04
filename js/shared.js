@@ -18,7 +18,16 @@ const default_vals={
       aposta_maxima:10000,   //max_bet
       usuario: 'usuario',
       senha: 'senha',
-      licenca:'00000000-0000'
+      licenca:'00000000-0000',
+      z_active:{
+         '1.dom':'00:00-23:59',
+         '2.seg':'00:00-23:59',
+         '3.ter':'00:00-23:59',
+         '4.qua':'00:00-23:59',
+         '5.qui':'00:00-23:59',
+         '6.sex':'00:00-23:59',
+         '7.sab':'00:00-23:59',
+      }
    }
 };
 
