@@ -12,10 +12,10 @@ const default_vals={
    MODEL:{},
    config:{
       dominio: "365sport365.com",
-      minimo_indice_para_apostar:0.02,   //min_idx
-      percentual_de_kelly:0.5,    //perc_kelly
-      maximo_da_banca_por_aposta:0.12,   //max_perc_bank
-      aposta_maxima:10000,   //max_bet
+      minimo_indice_para_apostar:0.01,   //min_idx
+      percentual_de_kelly:0.6,    //perc_kelly
+      maximo_da_banca_por_aposta:0.14,   //max_perc_bank
+      aposta_maxima:5000,   //max_bet
       usuario: 'usuario',
       senha: 'senha',
       licenca:'00000000-0000',
