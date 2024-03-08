@@ -21,6 +21,8 @@ chrome.storage.local.get(['config','bot_ligado','click_type'], VARS=> {
    $("#cmn-toggle-1").onchange=(event)=> chrome.storage.local.set( {bot_ligado: event.target.checked} );
    
    //Ao clicar botão salva a configuração
-   $('#salva').onclick=()=>chrome.storage.local.set( {config:JSON.parse( $('#config').value) }) ;
-
+   $('#salva').onclick=()=>{
+      chrome.storage.local.set( {config:JSON.parse( $('#config').value) }) ;
+      location.reload();
+   }
 });
