@@ -239,6 +239,8 @@ const calcIndex=(pos)=>{
    const hand=Math.abs(handicap);
    const goal_diff=goalline-s_g;
    
+   //Filtra por goal_diff
+   if(goal_diff<VARS.config.goal_diff_min) return -1;
    
    //Funcões de ativação não lineares
    const funcs=(f)=>({

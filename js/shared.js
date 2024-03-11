@@ -12,6 +12,7 @@ const default_vals={
    MODEL:{},
    config:{
       dominio: "365sport365.com",
+      goal_diff_min:1.0,
       minimo_indice_para_apostar:0.01,   //min_idx
       percentual_de_kelly:0.6,    //perc_kelly
       maximo_da_banca_por_aposta:0.14,   //max_perc_bank
