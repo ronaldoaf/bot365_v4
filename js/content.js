@@ -214,6 +214,11 @@ const jaFoiApostado=(home,away)=>VARS.my_bets.map(b=>b.home_v_away).includes(`${
 
 
 
+
+
+
+
+             
 const calcIndex=(pos)=>{
    const fixture=$$('.ovm-Fixture')[pos];
    
@@ -238,6 +243,12 @@ const calcIndex=(pos)=>{
    const [d_g, d_c, d_da, d_s] = [gH-gA, cH-cA, daH-daA, sH-sA].map(e=>Math.abs(e));
    const hand=Math.abs(handicap);
    const goal_diff=goalline-s_g;
+   
+   const ps=stats[0].ps.filter(e=>e.gl==goalline);
+   if (ps.length) {
+      const min_tc_ps=VARS.tc_ps[Math.round(VARS.config.min_ps_perc*100)];      
+      if( oddsU/ps[0].ou < min_tc_ps ) return -0.99;
+   }
    
    //Filtra por goal_diff
    if(goal_diff<VARS.config.goal_diff_min) return -1;
