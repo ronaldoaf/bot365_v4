@@ -345,7 +345,7 @@ const apostar=async(pos, stake)=>{
   
 
    //Se o checkbox de Free bet estiver visivel cria nele
-   const credits_checkbox=$$('.bsc-BetCreditsHeader_CheckBox')[1];
+   const credits_checkbox=$$('.bsc-BetCreditsHeader_CheckBox')[0];
    if(credits_checkbox){
       if ( credits_checkbox.getBoundingClientRect().y<$('.bsf-StakeBox').getBoundingClientRect().y-1  ) {
          if (credits_checkbox.classList.contains('bsc-BetCreditsHeader_CheckBox-selected')==false ){
