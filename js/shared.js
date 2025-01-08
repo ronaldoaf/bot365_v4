@@ -11,7 +11,7 @@ const default_vals={
    stats:[],
    MODEL:{},
    config:{
-      dominio: "365sport365.com",
+      dominio: "bet365.bet.br",
       goal_diff_min:1.0,
       minimo_indice_para_apostar:0.01,   //min_idx
       min_ps_perc:0.5,
