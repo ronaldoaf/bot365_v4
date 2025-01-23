@@ -448,6 +448,10 @@ const preReq=async()=>{
    const free_bet_close_button=$('.pm-FreeBetsPushGraphicCloseButton');
    if( free_bet_close_button ) await free_bet_close_button.rclick();
    
+   //Ao aparecer as informações sobre o último login, clica para continuar
+   const last_login_button=$('.llm-LastLoginModule_Button');
+   if( last_login_button ) await last_login_button.rclick();
+   
    
    //Seleciona o mercado Goal Line In-Play, caso não esteja selecionado
    const market_switcher=$('.ovm-ClassificationMarketSwitcherDropdownButton');
