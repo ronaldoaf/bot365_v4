@@ -14,6 +14,11 @@ const calcHand=(hand_str)=>avg(hand_str.split(',').map(e=>Number(e) ));
 const $=(q)=>document.querySelector(q);
 const $$=(q)=>document.querySelectorAll(q);
 
+
+const hardswish= (x)=>x<-3?0:(x>3?x: x*(x+3)/6);
+const doublehardswish = (x)=>0.05+hardswish(hardswish(x));
+
+
 //Funcão genérica envia os eventos do contentScript o backgroundScript
 const sendEvent=async(ev, input)=>{
    
@@ -237,10 +242,13 @@ const calcIndex=(pos)=>{
    //Se não encontrar a stats correspodente retorna -1
    if (stats.length==0) return -1;
    
-   const {gH,gA,cH,cA,daH,daA,sH,sA,handicap,W,gl_0}=stats[0];
+   const {gH,gA,cH,cA,daH,daA,sH,sA,soH,soA,sfH,sfA,handicap,W,gl_0}=stats[0];
    
-   const [s_g, s_c, s_da, s_s] = [gH+gA, cH+cA, daH+daA, sH+sA];
-   const [d_g, d_c, d_da, d_s] = [gH-gA, cH-cA, daH-daA, sH-sA].map(e=>Math.abs(e));
+   const [s_g, s_c, s_da, s_s, s_so, s_sf] = [gH+gA, cH+cA, daH+daA, sH+sA, soH+soA, sfH+sfA];
+   const [d_g, d_c, d_da, d_s, d_so, d_sf] = [gH-gA, cH-cA, daH-daA, sH-sA, soH-soA, sfH-sfA].map(e=>Math.abs(e));
+   
+   const [L1, M1]= [ Math.log(1+s_s), Math.log(1+s_so) ];
+   
    const hand=Math.abs(handicap);
    const goal_diff=goalline-s_g;
    
@@ -256,7 +264,8 @@ const calcIndex=(pos)=>{
    //Funcões de ativação não lineares
    const funcs=(f)=>({
       tanh: Math.tanh,
-      hardswish: x=>x<-3?0:(x>3?x: x*(x+3)/6),
+      hardswish,
+      doublehardswish,
    })[f];
    
    
@@ -267,21 +276,27 @@ const calcIndex=(pos)=>{
    };
        
    const input_data = {
-        s_g,
-        s_c,
-        s_s,
-        s_da,
-        d_g,
-        d_c,
-        d_s,
-        d_da,
-        goal_diff,
-        oddsU,
-        W,
-        hand,
-        gl_0
+       s_g,
+       s_c,
+       s_s,
+       s_so,
+       s_sf,
+       s_da,
+       d_g,
+       d_c,
+       d_s,
+       d_da,
+       d_so,
+       d_sf,
+       goal_diff,
+       oddsU,
+       W,
+       gl_0,
+       hand,
+       L1,
+       M1 
     };
-     
+
    const  idx = avgModel(VARS.MODEL, input_data);
    
    return idx
