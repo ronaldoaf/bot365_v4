@@ -292,7 +292,7 @@ const calcIndex=(pos)=>{
    //Faz a médias dos modelos MODEL
    const avgModel = (MODEL, input_data) => {
       //const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => funcs_(model["1.func"])(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => funcs_(model["3.func"])(e))), X[0]);
-      const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => silu(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => clamp(e))), X[0]);
+      const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => silu(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => silu_clamp(e))), X[0]);
 
       return X = MODEL.scale.map((x => (input_data[x.name] - x.min) / (x.max - x.min))), MODEL.models.map((x => evalModel(x, X))).reduce(((x, a) => x + a)) / MODEL.models.length
    };
@@ -301,14 +301,14 @@ const calcIndex=(pos)=>{
 		s_g,
 		s_c,
 		s_s,
-		d_g,
-		d_da,
-		d_s,
+		d_g, 
+		d_da, 
+		d_s, 
 		goal_diff,
 		oddsU,
 		W,
-		hand,
-		gg,
+		hand, 
+		gg, 
 		L1
     };
 
