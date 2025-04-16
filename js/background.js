@@ -146,7 +146,7 @@ chrome.runtime.onMessage.addListener(async(msg,sender)=>{
    });
    if (msg.command =='model') await action(async()=>{
       try{
-         const MODEL=await fetch1('https://bot-ao.com/model.php').then(r=>r.json());
+         const MODEL=await fetch1('https://bot-ao.com/model_new.php').then(r=>r.json());
          chrome.storage.local.set({MODEL}); 
       } catch(e){
          console.log(e);
