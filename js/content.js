@@ -1,5 +1,8 @@
-//console.log2=console.log;
-console.log=(data)=>chrome.runtime.sendMessage({command:'log', data:data});
+console.log2=console.log;
+console.log=(data)=>{
+   chrome.runtime.sendMessage({command:'log', data:data});
+   console.log2(data);
+}
 //constante para 1 segundo em milisegundos
 const sec=1000;
 
@@ -15,10 +18,25 @@ const $=(q)=>document.querySelector(q);
 const $$=(q)=>document.querySelectorAll(q);
 
 
+
+
+
 const hardswish= (x)=>x<-3?0:(x>3?x: x*(x+3)/6);
 const doublehardswish = (x)=>0.05+hardswish(hardswish(x));
+const silu=(x)=>x/(1 + Math.exp(-x));
+const clamp=(x)=>Math.tanh(1*(x))*0.3+0.01;
+const silu_clamp=(x)=>clamp( silu(x) );
 
-
+//Funcões de ativação não lineares
+const funcs_=(f)=>({
+   tanh: Math.tanh,
+   hardswish,
+   doublehardswish,
+   clamp,
+   silu_clamp,
+})[f];
+console.log(funcs_);
+   
 //Funcão genérica envia os eventos do contentScript o backgroundScript
 const sendEvent=async(ev, input)=>{
    
@@ -154,7 +172,7 @@ const doLogin=async()=>{
    
    
    //Se já existir um usuário no campo
-   if ( $('.lms-StandardLogin_UsernameControl') ){
+   if ( $('.lms-StandardLogin_UsernameControl').offsetTop >0 ){
       
       //Clica no "X" para limpar o campo
       await $('.lms-StandardLogin_UsernameControl').rclick();
@@ -234,6 +252,8 @@ const calcIndex=(pos)=>{
    const home=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[0].innerText;
    const away=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[1].innerText;
    const goalline=calcHand(fixture.$$('.ovm-ParticipantStackedCentered_Handicap')[1].innerText); 
+   
+   const oddsO=Number(fixture.$$('.ovm-ParticipantStackedCentered_Odds')[0].innerText); 
    const oddsU=Number(fixture.$$('.ovm-ParticipantStackedCentered_Odds')[1].innerText); 
    
    //Procura a stat corresponde a esse jogo
@@ -242,7 +262,7 @@ const calcIndex=(pos)=>{
    //Se não encontrar a stats correspodente retorna -1
    if (stats.length==0) return -1;
    
-   const {gH,gA,cH,cA,daH,daA,sH,sA,soH,soA,sfH,sfA,handicap,W,gl_0}=stats[0];
+   const {gH,gA,cH,cA,daH,daA,sH,sA,soH,soA,sfH,sfA,handicap,W,gl_0,ah_0}=stats[0];
    
    const [s_g, s_c, s_da, s_s, s_so, s_sf] = [gH+gA, cH+cA, daH+daA, sH+sA, soH+soA, sfH+sfA];
    const [d_g, d_c, d_da, d_s, d_so, d_sf] = [gH-gA, cH-cA, daH-daA, sH-sA, soH-soA, sfH-sfA].map(e=>Math.abs(e));
@@ -251,6 +271,10 @@ const calcIndex=(pos)=>{
    
    const hand=Math.abs(handicap);
    const goal_diff=goalline-s_g;
+   
+   const hand0=Math.abs(ah_0);
+   const gg=gl_0/goal_diff;
+   const edge=1/(1/oddsO+1/oddsU);
    
    const ps=stats[0].ps.filter(e=>e.gl==goalline);
    if (ps.length) {
@@ -261,40 +285,31 @@ const calcIndex=(pos)=>{
    //Filtra por goal_diff
    if(goal_diff<VARS.config.goal_diff_min) return -1;
    
-   //Funcões de ativação não lineares
-   const funcs=(f)=>({
-      tanh: Math.tanh,
-      hardswish,
-      doublehardswish,
-   })[f];
-   
+   if (oddsU<1.70) return -1;
+   if (goal_diff<1) return -1;
+
    
    //Faz a médias dos modelos MODEL
    const avgModel = (MODEL, input_data) => {
-      const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => funcs(model["1.func"])(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => funcs(model["3.func"])(e))), X[0]);
+      //const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => funcs_(model["1.func"])(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => funcs_(model["3.func"])(e))), X[0]);
+      const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => silu(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => clamp(e))), X[0]);
+
       return X = MODEL.scale.map((x => (input_data[x.name] - x.min) / (x.max - x.min))), MODEL.models.map((x => evalModel(x, X))).reduce(((x, a) => x + a)) / MODEL.models.length
    };
        
    const input_data = {
-       s_g,
-       s_c,
-       s_s,
-       s_so,
-       s_sf,
-       s_da,
-       d_g,
-       d_c,
-       d_s,
-       d_da,
-       d_so,
-       d_sf,
-       goal_diff,
-       oddsU,
-       W,
-       gl_0,
-       hand,
-       L1,
-       M1 
+		s_g,
+		s_c,
+		s_s,
+		d_g,
+		d_da,
+		d_s,
+		goal_diff,
+		oddsU,
+		W,
+		hand,
+		gg,
+		L1
     };
 
    const  idx = avgModel(VARS.MODEL, input_data);
