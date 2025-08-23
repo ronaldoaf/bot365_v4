@@ -1,8 +1,5 @@
-console.log2=console.log;
-console.log=(data)=>{
-   chrome.runtime.sendMessage({command:'log', data:data});
-   console.log2(data);
-}
+//console.log2=console.log;
+console.log=(data)=>chrome.runtime.sendMessage({command:'log', data:data});
 //constante para 1 segundo em milisegundos
 const sec=1000;
 
@@ -11,32 +8,12 @@ const sum=(arr)=>arr.length>0?arr.reduce((a,b)=>a+b):0;
 const avg=(arr)=>arr.length>0?sum(arr)/arr.length: 0;
 
 //Converte o handicap do formato 2.5,3.0  para 2.75, por exemplo
-const calcHand=(hand_str)=>avg(hand_str.replace(/[\+UO ]/,'').split(',').map(e=>Number(e) ));
+const calcHand=(hand_str)=>avg(hand_str.split(',').map(e=>Number(e) ));
 
 //Shorthands $ e $$
 const $=(q)=>document.querySelector(q);
 const $$=(q)=>document.querySelectorAll(q);
 
-
-
-
-
-const hardswish= (x)=>x<-3?0:(x>3?x: x*(x+3)/6);
-const doublehardswish = (x)=>0.05+hardswish(hardswish(x));
-const silu=(x)=>x/(1 + Math.exp(-x));
-const clamp=(x)=>Math.tanh(1*(x))*0.3+0.01;
-const silu_clamp=(x)=>clamp( silu(x) );
-
-//Funcões de ativação não lineares
-const funcs_=(f)=>({
-   tanh: Math.tanh,
-   hardswish,
-   doublehardswish,
-   clamp,
-   silu_clamp,
-})[f];
-console.log(funcs_);
-   
 //Funcão genérica envia os eventos do contentScript o backgroundScript
 const sendEvent=async(ev, input)=>{
    
@@ -158,7 +135,11 @@ Element.prototype.rscroll = async function(){
       dist=this.getBoundingClientRect().y - wH/2;
    }
   
+   //Se parte do elemento estiver fora da janela scroll para o elemento subir
+   if (e.getBoundingClientRect().y+eH >wH) await sendScroll({y: wH/4});
+   
 };
+
 
 
 //Rotina que a realiza o login 
@@ -172,7 +153,7 @@ const doLogin=async()=>{
    
    
    //Se já existir um usuário no campo
-   if ( $('.lms-StandardLogin_UsernameControl').offsetTop >0 ){
+   if ( $('.lms-StandardLogin_UsernameControl') ){
       
       //Clica no "X" para limpar o campo
       await $('.lms-StandardLogin_UsernameControl').rclick();
@@ -251,10 +232,8 @@ const calcIndex=(pos)=>{
    
    const home=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[0].innerText;
    const away=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[1].innerText;
-   const goalline=calcHand(fixture.$$('.ovm-ParticipantStackedCentered_Handicap')[2].innerText); 
-   
-   const oddsO=Number(fixture.$$('.ovm-ParticipantStackedCentered_Odds')[2].innerText); 
-   const oddsU=Number(fixture.$$('.ovm-ParticipantStackedCentered_Odds')[3].innerText); 
+   const goalline=calcHand(fixture.$$('.ovm-ParticipantStackedCentered_Handicap')[1].innerText); 
+   const oddsU=Number(fixture.$$('.ovm-ParticipantStackedCentered_Odds')[1].innerText); 
    
    //Procura a stat corresponde a esse jogo
    const stats=VARS.stats.filter(e=>e.home==home && e.away==away);
@@ -262,19 +241,12 @@ const calcIndex=(pos)=>{
    //Se não encontrar a stats correspodente retorna -1
    if (stats.length==0) return -1;
    
-   const {gH,gA,cH,cA,daH,daA,sH,sA,soH,soA,sfH,sfA,handicap,W,gl_0,ah_0}=stats[0];
+   const {gH,gA,cH,cA,daH,daA,sH,sA,handicap,W,gl_0}=stats[0];
    
-   const [s_g, s_c, s_da, s_s, s_so, s_sf] = [gH+gA, cH+cA, daH+daA, sH+sA, soH+soA, sfH+sfA];
-   const [d_g, d_c, d_da, d_s, d_so, d_sf] = [gH-gA, cH-cA, daH-daA, sH-sA, soH-soA, sfH-sfA].map(e=>Math.abs(e));
-   
-   const [L1, M1]= [ Math.log(1+s_s), Math.log(1+s_so) ];
-   
+   const [s_g, s_c, s_da, s_s] = [gH+gA, cH+cA, daH+daA, sH+sA];
+   const [d_g, d_c, d_da, d_s] = [gH-gA, cH-cA, daH-daA, sH-sA].map(e=>Math.abs(e));
    const hand=Math.abs(handicap);
    const goal_diff=goalline-s_g;
-   
-   const hand0=Math.abs(ah_0);
-   const gg=gl_0/goal_diff;
-   const edge=1/(1/oddsO+1/oddsU);
    
    const ps=stats[0].ps.filter(e=>e.gl==goalline);
    if (ps.length) {
@@ -285,33 +257,35 @@ const calcIndex=(pos)=>{
    //Filtra por goal_diff
    if(goal_diff<VARS.config.goal_diff_min) return -1;
    
-   if (oddsU<1.70) return -1;
-   if (goal_diff<1) return -1;
-
+   //Funcões de ativação não lineares
+   const funcs=(f)=>({
+      tanh: Math.tanh,
+      hardswish: x=>x<-3?0:(x>3?x: x*(x+3)/6),
+   })[f];
+   
    
    //Faz a médias dos modelos MODEL
    const avgModel = (MODEL, input_data) => {
-      //const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => funcs_(model["1.func"])(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => funcs_(model["3.func"])(e))), X[0]);
-      const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => silu(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => silu_clamp(e))), X[0]);
-
+      const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => funcs(model["1.func"])(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => funcs(model["3.func"])(e))), X[0]);
       return X = MODEL.scale.map((x => (input_data[x.name] - x.min) / (x.max - x.min))), MODEL.models.map((x => evalModel(x, X))).reduce(((x, a) => x + a)) / MODEL.models.length
    };
        
    const input_data = {
-		s_g,
-		s_c,
-		s_s,
-		d_g, 
-		d_da, 
-		d_s, 
-		goal_diff,
-		oddsU,
-		W,
-		hand, 
-		gg, 
-		L1
+        s_g,
+        s_c,
+        s_s,
+        s_da,
+        d_g,
+        d_c,
+        d_s,
+        d_da,
+        goal_diff,
+        oddsU,
+        W,
+        hand,
+        gl_0
     };
-
+     
    const  idx = avgModel(VARS.MODEL, input_data);
    
    return idx
@@ -336,7 +310,7 @@ const apostar=async(pos, stake)=>{
    chrome.storage.local.set({apostando:  true } );   
    
    //Seleciona o jogo objeto com a odd ser apostado, a partir da posição (pos) jogo na lista de jogos
-    const sel=$$('.ovm-Fixture')[pos].$$('.gl-Participant_General')[3];
+    const sel=$$('.ovm-Fixture')[pos].$$('.gl-Participant_General')[1];
    
    //Extrai as informações de goalline e odds que vamos apostar
    const gl=calcHand(sel.$('.ovm-ParticipantStackedCentered_Handicap').innerText); 
@@ -478,19 +452,24 @@ const preReq=async()=>{
    const free_bet_close_button=$('.pm-FreeBetsPushGraphicCloseButton');
    if( free_bet_close_button ) await free_bet_close_button.rclick();
    
-   //Ao aparecer as informações sobre o último login, clica para continuar
-   const last_login_button=$('.llr-0');
-   if( last_login_button ) await last_login_button.rclick();
    
+   //Se aparecer o Deposit Now, cancela
+   const deposit_cancel_button=$('.bs-DepositNowDialogCancelButton ');
+   if (deposit_cancel_button) {
+	   await deposit_cancel_button.rclick(); 
+	   await sleep(2*sec);
+	   await $('.bss-RemoveButton').rclick();
+   }
    
-   
-   //Deixa no mercado Asian Lines
-   if ($('.ovm-ClassificationMarketSwitcherDropdownButton_Text').innerText!='Asian Lines') {
-	   await $('.ovm-ClassificationMarketSwitcherDropdownButton_Text').rclick();
-	   await $$('.ovm-ClassificationMarketSwitcherDropdownItem')[3].rclick();  
-   }	
-   
-
+   //Seleciona o mercado Goal Line In-Play, caso não esteja selecionado
+   const market_switcher=$('.ovm-ClassificationMarketSwitcherDropdownButton');
+   if(market_switcher.innerText.substr(0,2) != 'Go' ){
+      await market_switcher.rscroll();
+      await sleep(1*sec);
+      await market_switcher.rclick();
+      await sleep(1*sec);
+      await $$('.ovm-ClassificationMarketSwitcherDropdownItem')[3].rclick();
+   }
    
 };
 
@@ -548,7 +527,7 @@ const main=async()=>{
       //Seta as váriaveis
       await setVars();
       
-      await sleep(10*1000)
+      await sleep(20*1000)
       
       //Se não estiver na tela o Inplay  não faz nada
       if ( !location.hash.includes('#/IP') )  continue;
