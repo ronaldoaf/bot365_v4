@@ -167,28 +167,28 @@ const doLogin=async()=>{
    await $('.hm-MainHeaderRHSLoggedOutNarrow_Login').rclick();
    
    //Aguarda surgir o campo para digitar o usuário, se não aparecer interrompe a rotina
-   if( !(await waitFor($('.lms-StandardLogin_Username'))) ) return;
+   if( !(await waitFor($('.slm2-a9'))) ) return;
    await sleep(2*sec);
-   
+   console.log('foi');
    
    //Se já existir um usuário no campo
-   if ( $('.lms-StandardLogin_UsernameControl').offsetTop >0 ){
+   if ( $('.slm2-e') ){
       
       //Clica no "X" para limpar o campo
-      await $('.lms-StandardLogin_UsernameControl').rclick();
+      await $('.slm2-e').rclick();
    } else{
       
       //Se já estiver limpo clica no campo usuário para habilitar a ditigitação
-      await $('.lms-StandardLogin_Username').rclick();
+      await $('.slm2-a9').rclick();
    }
    await sleep(0.5*sec);
    
    //Digita o usuário
    await sendType({str:`'${VARS.config.usuario}'` });
-   await sleep(0.5*sec);
+   await sleep(1*sec);
    
-   //Envia um TAB para passar o campo da senha
-   await sendType({str:'Key.Tab' });
+   //Clica no campo da senha
+   await $('[placeholder="Password"]').rclick();
    await sleep(0.5*sec);
    
    //Digita a senha
@@ -196,13 +196,13 @@ const doLogin=async()=>{
    await sleep(0.5*sec);
    
    //Clica no botão login
-   await $('.lms-LoginButton ').rclick();
+   await $('.slm2-32').rclick();
    
    //Aguarda 5 segundos
    await sleep(5*sec);
    
    //Se acontecer falha de login, desliga o bot para não ficar em looop
-   if ( $('.lmd-LoginModuleDefault_FailedLogin ') ){
+   if ( $('.slm2-f4') ){
       chrome.storage.local.set({bot_ligado:false});
       alert("Deu Merda no Login!!!\n\n\n O bot foi desligado");15
    }
