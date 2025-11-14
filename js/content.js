@@ -26,6 +26,9 @@ const doublehardswish = (x)=>0.05+hardswish(hardswish(x));
 const silu=(x)=>x/(1 + Math.exp(-x));
 const clamp=(x)=>Math.tanh(1*(x))*0.3+0.01;
 const silu_clamp=(x)=>clamp( silu(x) );
+const tanhA=(x)=>0.25*Math.tanh(x);
+const hardswish_hardswish=(x)=>hardswish(hardswish(x));
+const hardswish_tanhA=(x)=>tanhA(hardswish(x));
 
 //Funcões de ativação não lineares
 const funcs_=(f)=>({
@@ -34,6 +37,8 @@ const funcs_=(f)=>({
    doublehardswish,
    clamp,
    silu_clamp,
+   hardswish_hardswish,
+   hardswish_tanhA,
 })[f];
 console.log(funcs_);
    
@@ -275,6 +280,8 @@ const calcIndex=(pos)=>{
    const hand0=Math.abs(ah_0);
    const gg=gl_0/goal_diff;
    const edge=1/(1/oddsO+1/oddsU);
+   const probU=1/oddsU;
+   const s_s2=s_s**2;
    
    const ps=stats[0].ps.filter(e=>e.gl==goalline);
    if (ps.length) {
@@ -300,16 +307,15 @@ const calcIndex=(pos)=>{
    const input_data = {
 		s_g,
 		s_c,
-		s_s,
+		s_s2,
 		d_g, 
 		d_da, 
 		d_s, 
 		goal_diff,
-		oddsU,
+		probU,
 		W,
 		hand, 
 		gg, 
-		L1
     };
 
    const  idx = avgModel(VARS.MODEL, input_data);
