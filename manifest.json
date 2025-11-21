@@ -19,7 +19,7 @@
       "https://bot-ao.com/*",
       "https://www.bet365.bet.br/*"
     ],
-   "version": "1.8.0",
+   "version": "1.9.0",
    "web_accessible_resources": [ "images/*" ],
    "background": {
     "scripts": ["js/shared.js","js/background.js"]
