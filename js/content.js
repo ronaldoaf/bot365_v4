@@ -21,19 +21,21 @@ const $$=(q)=>document.querySelectorAll(q);
 
 
 
-const hardswish= (x)=>x<-3?0:(x>3?x: x*(x+3)/6);
-const doublehardswish = (x)=>0.05+hardswish(hardswish(x));
 const silu=(x)=>x/(1 + Math.exp(-x));
 const clamp=(x)=>Math.tanh(1*(x))*0.3+0.01;
 const silu_clamp=(x)=>clamp( silu(x) );
+const tanhA=(x)=>0.25*Math.tanh(x);
+const hardswish_hardswish=(x)=>hardswish(hardswish(x));
+const hardswish_tanhA=(x)=>tanhA(hardswish(x));
 
 //Funcões de ativação não lineares
 const funcs_=(f)=>({
    tanh: Math.tanh,
-   hardswish,
    doublehardswish,
    clamp,
    silu_clamp,
+   hardswish_hardswish,
+   hardswish_tanhA,
 })[f];
 console.log(funcs_);
    
@@ -276,6 +278,9 @@ const calcIndex=(pos)=>{
    const gg=gl_0/goal_diff;
    const edge=1/(1/oddsO+1/oddsU);
    
+   const probU=1/oddsU;
+   const s_s2=s_s**2;
+   
    const ps=stats[0].ps.filter(e=>e.gl==goalline);
    if (ps.length) {
       const min_tc_ps=VARS.tc_ps[Math.round(VARS.config.min_ps_perc*100)];      
@@ -297,15 +302,17 @@ const calcIndex=(pos)=>{
       return X = MODEL.scale.map((x => (input_data[x.name] - x.min) / (x.max - x.min))), MODEL.models.map((x => evalModel(x, X))).reduce(((x, a) => x + a)) / MODEL.models.length
    };
        
-   const input_data = {
+      const input_data = {
 		s_g,
 		s_c,
 		s_s,
+		s_s2,
 		d_g, 
 		d_da, 
 		d_s, 
 		goal_diff,
 		oddsU,
+		probU,
 		W,
 		hand, 
 		gg, 
