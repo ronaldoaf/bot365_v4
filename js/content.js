@@ -15,7 +15,16 @@ const calcHand=(hand_str)=>avg(hand_str.replace(/[\+UO ]/,'').split(',').map(e=>
 
 //Shorthands $ e $$
 const $=(q)=>document.querySelector(q);
-const $$=(q)=>document.querySelectorAll(q);
+const $$=(q)=>[...document.querySelectorAll(q)];
+
+
+Array.prototype.fText = function(texto) {
+    // 'this' refere-se ao próprio NodeList
+    return [...this].filter(node => 
+        node.innerText && node.innerText.includes(texto)
+    );
+};
+
 
 
 
@@ -94,7 +103,7 @@ const waitFor=async(el, timeout=20*sec)=>{
 
 //Shorthands $ e $$ para os elementos
 Element.prototype.$ =function(q) { return this.querySelector(q)  };
-Element.prototype.$$=function(q) { return this.querySelectorAll(q) };
+Element.prototype.$$=function(q) { return [...this.querySelectorAll(q)] };
 
 
 const adjustBrower=()=>{
@@ -221,7 +230,7 @@ const doLogin=async()=>{
 
  const getBalance=async()=>{
    //Procura por números, remove os pontos e as vírgulas e divide por 100
-   const balance=Number(/[0-9.,]+/.exec( $('.hm-Balance').innerText )[0].replace(/[.,]/g,'') )/100; 
+   const balance=Number(/[0-9.,]+/.exec( $$('span[class*="hrm"]').fText('$')[0].innerText )[0].replace(/[.,]/g,'') )/100; 
    chrome.storage.local.set({balance});
    VARS.balance=balance;
  };
@@ -492,7 +501,7 @@ const preReq=async()=>{
    if( free_bet_close_button ) await free_bet_close_button.rclick();
    
    //Ao aparecer as informações sobre o último login, clica para continuar
-   const last_login_button=$('.llr-5');
+   const last_login_button=[...$$('[class*="llr"]')].filter(e=>e.innerText=='Continue')[0];
    if( last_login_button ) await last_login_button.rclick();
    
    
@@ -569,8 +578,8 @@ const main=async()=>{
       
       
       
-      //Verifica o balance existe indicando que está logado
-      chrome.storage.local.set({logado: Boolean( $('.hm-Balance') ) } );
+      //Verifica o balance existe indicando que está logado, estiver o Saldo com $
+      chrome.storage.local.set({logado: Boolean( $$('span[class*="hrm"]').fText('$')[0] ) } );
       
       //Se o bot_ligado desligado, não faz nada 
       if(!VARS.bot_ligado) continue;
