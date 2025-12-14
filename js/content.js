@@ -66,7 +66,7 @@ const sendClick=async(input)=>await sendEvent('click', input);
 const sendMove=async(input)=>await sendEvent('move', input);
 const sendScroll=async(input)=>await sendEvent('scroll', input);
 const sendType=async(input)=>await sendEvent('type', input);
-
+const sendBackspace=async(input)=>await sendEvent('backspace', input);
 
 //Move o cursor para centro da janela
 const moveToCenterOfWindow=async()=>{
@@ -165,27 +165,32 @@ Element.prototype.rscroll = async function(){
 
 //Rotina que a realiza o login 
 const doLogin=async()=>{
-   //Clicka no botão "Log in"
-   await $('.hm-MainHeaderRHSLoggedOutNarrow_Login').rclick();
+   //Clicla no botão "Log in"
+   await [...$$('button')].filter(e=>e.innerText=='Log In')[0].rclick();
    
    //Aguarda surgir o campo para digitar o usuário, se não aparecer interrompe a rotina
-   if( !(await waitFor($('.slm2-e'))) ) return;
+   if( !(await waitFor( $('[placeholder*="Username"]') )) ) return;
+   
+   const input_username=$('[placeholder*="Username"]');
+   const box_login=input_username.parentNode.parentNode.parentNode;
+   
    await sleep(2*sec);
    console.log('foi');
    
    //Se já existir um usuário no campo (aparecendo um "X" )
-   if ( $('.slm2-ad') ){
+   if ( input_username.nextElementSibling ){
       
       //Clica no "X" para limpar o campo
-      await $('.slm2-ad').rclick();
+      await input_username.nextElementSibling.rclick();
    } else{
       
       //Se já estiver limpo clica no campo usuário para habilitar a ditigitação
-      await $('[placeholder="Username or email address"]').rclick();
+      await input_username.rclick();
    }
    await sleep(0.5*sec);
    
    //Digita o usuário
+   await sendBackspace({n:7});
    await sendType({str:`'${VARS.config.usuario}'` });
    await sleep(1*sec);
    
@@ -198,13 +203,13 @@ const doLogin=async()=>{
    await sleep(0.5*sec);
    
    //Clica no botão login
-   await $('.slm2-09').rclick();
+   await [...$$('button > span')].filter(e=>e.innerText=='Log In')[0].rclick();
    
    //Aguarda 5 segundos
    await sleep(5*sec);
    
    //Se acontecer falha de login, desliga o bot para não ficar em looop
-   if ( $('.slm2-2d') ){
+   if ( [...box_login.querySelectorAll('div')].filter(e=>e.innerText.includes('Password incorrect')).length>0 ){
       chrome.storage.local.set({bot_ligado:false});
       alert("Deu Merda no Login!!!\n\n\n O bot foi desligado");15
    }
@@ -292,7 +297,7 @@ const calcIndex=(pos)=>{
    
    if (oddsU<1.70) return -1;
    if (goal_diff<1) return -1;
-
+   if (s_da<5 ) return -1;
    
    //Faz a médias dos modelos MODEL
    const avgModel = (MODEL, input_data) => {
@@ -401,13 +406,14 @@ const apostar=async(pos, stake)=>{
    
    //Finalmente clica no PlaceBet para submeter aposata
    await $('.bsf-PlaceBetButton').rclick();
-   await sleep(5*sec);
+   await sleep(15*sec);
    
    //Aguarda até aparecer o visistinho verde, indicando que aposta foi realizada com sucesso
    const rec=await waitFor($('.bss-ReceiptContent_Tick'));
    if (!rec) {    
       //Se não aparecer vistinho, log erro e interrompe a rotina
       console.log('Ocorreu erro, aposta não foi detectada com sucesso');
+	  chrome.runtime.sendMessage({command:'freeze'});
       return 1;
    }
    await sleep(1*sec);

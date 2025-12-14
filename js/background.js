@@ -93,6 +93,15 @@ const toggleIcon=()=>{
 chrome.runtime.onMessage.addListener(async(msg,sender)=>{
    if (msg.command =='log') console.log(msg.data);   
   
+  
+    //Deixa o bot desligado por 15 minutos
+	if (msg.command=='freeze') {
+		chrome.storage.local.set({bot_ligado:false});
+		setTimeout(()=>{
+			chrome.storage.local.set({bot_ligado:true});
+		},15*60*1000);
+		
+	}
    
    //Ação genérica usada nos eventos para evitar a repetição de manipulação das variáveis uuid
    const action=async(func)=>{
@@ -135,6 +144,12 @@ chrome.runtime.onMessage.addListener(async(msg,sender)=>{
       let res=await fetch(`http://localhost:1313/type?str=${str}`).then(r=>r.text() );
       console.log(res);
    });
+   
+   if (msg.command =='backspace') await action(async()=>{
+	  const {n}=msg.data;
+      let res=await fetch(`http://localhost:1313/backspace?n=${n}`).then(r=>r.text() );
+      console.log(res);
+   });   
    
    if (msg.command =='stats') await action(async()=>{
       try{
