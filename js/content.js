@@ -183,7 +183,7 @@ const doLogin=async()=>{
    const input_username=$('[placeholder*="Username"]');
    const box_login=input_username.parentNode.parentNode.parentNode;
    
-   await sleep(2*sec);
+   await sleep(1*sec);
    console.log('foi');
    
    //Se já existir um usuário no campo (aparecendo um "X" )
@@ -212,10 +212,10 @@ const doLogin=async()=>{
    await sleep(0.5*sec);
    
    //Clica no botão login
-   await [...$$('button > span')].filter(e=>e.innerText=='Log In')[0].rclick();
+   await [...$$('button[class*="slm2-"] > span')].filter(e=>e.innerText=='Log In')[0].rclick();
    
    //Aguarda 5 segundos
-   await sleep(5*sec);
+   await sleep(3*sec);
    
    //Se acontecer falha de login, desliga o bot para não ficar em looop
    if ( [...box_login.querySelectorAll('div')].filter(e=>e.innerText.includes('Password incorrect')).length>0 ){
