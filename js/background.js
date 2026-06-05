@@ -1,3 +1,7 @@
+//MV3: o background é um service worker. Importa o shared.js (VARS, default_vals,
+//sleep, setVars...), que antes era carregado pelo manifest no background MV2.
+importScripts(chrome.runtime.getURL('js/shared.js'));
+
 //Checa se uma lista de strings possui uma substring
 const inList=(list, str)=>list.map(e=>e.includes(str)).reduce((a,b)=>a||b);
 
@@ -70,15 +74,33 @@ const renewTabs=async()=>{
 }
 
 
-//Alterna entre os ícones verde e vermelho, se o bot está ligado ou desligado
-const toggleIcon=()=>{
-   if (VARS.bot_ligado) {
-      chrome.browserAction.setIcon({path: 'images/logo_32_verde.png'});
-   } else{
-      chrome.browserAction.setIcon({path: 'images/logo_32.png'});   
+//Carrega um PNG da extensão como ImageData (cacheado). No service worker do MV3,
+//setIcon por "path" é instável; passar "imageData" é o caminho confiável.
+const _iconCache={};
+const loadIconData=async(path)=>{
+   if (_iconCache[path]) return _iconCache[path];
+   const blob=await fetch(chrome.runtime.getURL(path)).then(r=>r.blob());
+   const bitmap=await createImageBitmap(blob);
+   const canvas=new OffscreenCanvas(bitmap.width, bitmap.height);
+   const ctx=canvas.getContext('2d');
+   ctx.drawImage(bitmap, 0, 0);
+   _iconCache[path]=ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+   return _iconCache[path];
+};
+
+//Aplica o ícone conforme o estado do bot (verde = ligado, vermelho = desligado)
+const applyIcon=async(on)=>{
+   const path = on ? 'images/logo_32_verde.png' : 'images/logo_32.png';
+   try{
+      chrome.action.setIcon({ imageData: await loadIconData(path) });
+   } catch(e){
+      chrome.action.setIcon({ path });   //Fallback se OffscreenCanvas indisponível
    }
-   
-}
+};
+
+//Alterna entre os ícones verde e vermelho, se o bot está ligado ou desligado.
+//Protegido contra VARS indefinido (worker recém-iniciado no MV3).
+const toggleIcon=()=> applyIcon(Boolean(VARS && VARS.bot_ligado));
 
 //=========================================================================================================
 chrome.runtime.onMessage.addListener(async(msg,sender)=>{
@@ -204,6 +226,41 @@ setInterval(()=>{
 
 //A cada 30 segundos fecha as abas para serem reaberta depois
 setInterval(renewTabs, 30*60*1000);
+
+
+
+//=========================================================================================================
+//Ícone event-driven: atualiza no instante em que bot_ligado muda, independente do
+//worker estar acordado pelo polling de 1s (que pode falhar com VARS ainda vazio).
+chrome.storage.onChanged.addListener((changes, area)=>{
+   if (area==='local' && changes.bot_ligado) applyIcon(changes.bot_ligado.newValue);
+});
+
+//Define o ícone correto assim que o worker (re)inicia.
+chrome.storage.local.get(['bot_ligado'], (v)=>applyIcon(v.bot_ligado));
+
+
+//=========================================================================================================
+//MV3: mantém o service worker vivo enquanto a aba do Bet365 estiver aberta.
+//O content script abre uma porta 'keepalive' e envia mensagens periódicas; cada
+//mensagem reinicia o timer de inatividade do worker, preservando os setInterval acima.
+chrome.runtime.onConnect.addListener((port)=>{
+   if (port.name!=='keepalive') return;
+   port.onMessage.addListener(()=>{});   //Só receber a mensagem já mantém o worker vivo
+   port.onDisconnect.addListener(()=>{});
+});
+
+//Rede de segurança: se todas as abas forem fechadas, não há content script para
+//manter o worker vivo. Este alarme (mínimo de 1 min no MV3) reacorda o worker
+//periodicamente para reabrir a aba do Inplay quando necessário.
+chrome.alarms.create('wakeup', { periodInMinutes: 1 });
+chrome.alarms.onAlarm.addListener(async()=>{
+   //Em um worker recém-acordado, VARS ainda não foi preenchido; carrega antes de usar.
+   await new Promise(r=>chrome.storage.local.get(Object.keys(default_vals), (v)=>{ VARS=v; r(); }));
+   toggleIcon();
+   ping();
+   if( atActiveInt() ) checkTabs();
+});
 
 
 

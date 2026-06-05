@@ -2,6 +2,19 @@
 ort.env.wasm.wasmPaths = chrome.runtime.getURL('js/ort/');
 
 
+//MV3: mantém o service worker (background) vivo enquanto esta aba estiver aberta,
+//para que seus timers (checkTabs, ping, toggleIcon...) continuem rodando.
+let _kaPort;
+const keepAlive=()=>{
+   _kaPort=chrome.runtime.connect({name:'keepalive'});
+   _kaPort.onDisconnect.addListener(keepAlive);   //Reconecta se o worker reiniciar
+};
+keepAlive();
+setInterval(()=>{
+   try{ _kaPort.postMessage('ping'); } catch(e){ keepAlive(); }
+}, 20*1000);
+
+
 //constante para 1 segundo em milisegundos
 const sec=1000;
 
