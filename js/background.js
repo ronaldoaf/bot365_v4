@@ -153,7 +153,7 @@ chrome.runtime.onMessage.addListener(async(msg,sender)=>{
    
    if (msg.command =='stats') await action(async()=>{
       try{
-         const stats=await fetch1('https://bot-ao.com/stats.php').then(r=>r.json());
+         const stats=await fetch('https://aposte.me/bot/stats.php').then(r=>r.json());
          chrome.storage.local.set({stats}); 
       } catch(e){
          console.log(e);
@@ -161,7 +161,7 @@ chrome.runtime.onMessage.addListener(async(msg,sender)=>{
    });
    if (msg.command =='model') await action(async()=>{
       try{
-         const MODEL=await fetch1('https://bot-ao.com/model_new.php').then(r=>r.json());
+         const MODEL=await fetch('https://aposte.me/bot/model_new.php').then(r=>r.json());
          chrome.storage.local.set({MODEL}); 
       } catch(e){
          console.log(e);

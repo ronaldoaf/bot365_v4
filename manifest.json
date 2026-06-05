@@ -19,8 +19,8 @@
       "https://bot-ao.com/*",
       "https://www.bet365.bet.br/*"
     ],
-   "version": "1.10.0",
-   "web_accessible_resources": [ "images/*" ],
+   "version": "1.12.0",
+   "web_accessible_resources": [ "images/*", "js/ort/*.wasm", "model.onnx" ],
    "background": {
     "scripts": ["js/shared.js","js/background.js"]
   },
@@ -29,7 +29,7 @@
       "matches": [
          "https://www.bet365.bet.br/*"
       ],
-      "js": ["js/shared.js","js/content.js"]
+      "js": ["js/shared.js","js/ort/ort.min.js","js/content.js"]
     }
   ]
 }

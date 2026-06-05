@@ -3,6 +3,11 @@ console.log=(data)=>{
    chrome.runtime.sendMessage({command:'log', data:data});
    console.log2(data);
 }
+
+// Aponta os arquivos WASM para dentro da extensão
+ort.env.wasm.wasmPaths = chrome.runtime.getURL('js/ort/');
+
+
 //constante para 1 segundo em milisegundos
 const sec=1000;
 
@@ -25,28 +30,13 @@ Array.prototype.fText = function(texto) {
     );
 };
 
+Element.prototype.hasClass =function(classe) { 
+	return this.getAttribute('class').split(' ').includes(classe);
+};
 
 
 
 
-
-const silu=(x)=>x/(1 + Math.exp(-x));
-const clamp=(x)=>Math.tanh(1*(x))*0.3+0.01;
-const silu_clamp=(x)=>clamp( silu(x) );
-const tanhA=(x)=>0.25*Math.tanh(x);
-const hardswish_hardswish=(x)=>hardswish(hardswish(x));
-const hardswish_tanhA=(x)=>tanhA(hardswish(x));
-
-//Funcões de ativação não lineares
-const funcs_=(f)=>({
-   tanh: Math.tanh,
-   doublehardswish,
-   clamp,
-   silu_clamp,
-   hardswish_hardswish,
-   hardswish_tanhA,
-})[f];
-console.log(funcs_);
    
 //Funcão genérica envia os eventos do contentScript o backgroundScript
 const sendEvent=async(ev, input)=>{
@@ -107,7 +97,7 @@ Element.prototype.$$=function(q) { return [...this.querySelectorAll(q)] };
 
 
 const adjustBrower=()=>{
-   if ( window.navigator.userAgent.includes('Chrome') ) return {aX:0, aY:-11};
+   if ( window.navigator.userAgent.includes('Chrome') ) return {aX:0, aY:-9};
    if ( window.navigator.userAgent.includes('Firefox') ) return {aX:1, aY:-5};
    return {aX:0, aY:0};
 }
@@ -196,10 +186,10 @@ const doLogin=async()=>{
       //Se já estiver limpo clica no campo usuário para habilitar a ditigitação
       await input_username.rclick();
    }
-   await sleep(0.5*sec);
+   await sleep(1*sec);
    
    //Digita o usuário
-   await sendBackspace({n:7});
+   //await sendBackspace({n:7});
    await sendType({str:`'${VARS.config.usuario}'` });
    await sleep(1*sec);
    
@@ -218,9 +208,9 @@ const doLogin=async()=>{
    await sleep(3*sec);
    
    //Se acontecer falha de login, desliga o bot para não ficar em looop
-   if ( [...box_login.querySelectorAll('div')].filter(e=>e.innerText.includes('Password incorrect')).length>0 ){
+   if ( [...box_login.querySelectorAll('div')].filter(e=>e.innerText.includes('Your details were not recognised')).length>0 ){
       chrome.storage.local.set({bot_ligado:false});
-      alert("Deu Merda no Login!!!\n\n\n O bot foi desligado");15
+      alert("Deu Merda no Login!!!\n\n\n O bot foi desligado");
    }
    
    chrome.storage.local.set({logado: true } );
@@ -253,12 +243,37 @@ const jaFoiApostado=(home,away)=>VARS.my_bets.map(b=>b.home_v_away).includes(`${
 
 
 
+//Cria a sessão ONNX uma única vez e a reutiliza (cacheada por aba).
+//Antes a sessão era recriada a cada fixture, recarregando o model.onnx em cada loop.
+let _sessionPromise = null;
+const getSession = () => {
+   if (!_sessionPromise) {
+      const modelUrl = chrome.runtime.getURL('model.onnx');
+      _sessionPromise = fetch(modelUrl)
+         .then(r => r.arrayBuffer())
+         .then(buf => ort.InferenceSession.create(buf))
+         .catch(e => { _sessionPromise = null; throw e; });  //Permite nova tentativa se falhar
+   }
+   return _sessionPromise;
+};
 
+const calcModel = async(X) => {
+   //X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0]
+
+   const session = await getSession();
+
+   const inputTensor = new ort.Tensor('float32', Float32Array.from(X), [1, X.length]);
+   const results = await session.run({ float_input: inputTensor });
+   const y=results.variable.cpuData[0];
+
+   return y
+
+}
 
 
 
              
-const calcIndex=(pos)=>{
+const calcIndex=async(pos)=>{
    const fixture=$$('.ovm-Fixture')[pos];
    
    //Se odds estiver suspensa retorna -1
@@ -267,10 +282,10 @@ const calcIndex=(pos)=>{
    
    const home=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[0].innerText;
    const away=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[1].innerText;
-   const goalline=calcHand(fixture.$$('.ovm-ParticipantStackedCentered_Handicap')[2].innerText); 
+   const goalline=calcHand(fixture.$$('.ovm-ParticipantHandicap_Handicap')[2].innerText); 
    
-   const oddsO=Number(fixture.$$('.ovm-ParticipantStackedCentered_Odds')[2].innerText); 
-   const oddsU=Number(fixture.$$('.ovm-ParticipantStackedCentered_Odds')[3].innerText); 
+   const oddsO=Number(fixture.$$('.ovm-ParticipantHandicap_Odds')[2].innerText); 
+   const oddsU=Number(fixture.$$('.ovm-ParticipantHandicap_Odds')[3].innerText); 
    
    //Procura a stat corresponde a esse jogo
    const stats=VARS.stats.filter(e=>e.home==home && e.away==away);
@@ -283,24 +298,14 @@ const calcIndex=(pos)=>{
    const [s_g, s_c, s_da, s_s, s_so, s_sf] = [gH+gA, cH+cA, daH+daA, sH+sA, soH+soA, sfH+sfA];
    const [d_g, d_c, d_da, d_s, d_so, d_sf] = [gH-gA, cH-cA, daH-daA, sH-sA, soH-soA, sfH-sfA].map(e=>Math.abs(e));
    
-   const [L1, M1]= [ Math.log(1+s_s), Math.log(1+s_so) ];
-   
+
    const hand=Math.abs(handicap);
    const goal_diff=goalline-s_g;
-   
-   const hand0=Math.abs(ah_0);
-   const gg=gl_0/goal_diff;
-   const edge=1/(1/oddsO+1/oddsU);
-   
-   const probU=1/oddsU;
-   const s_s2=s_s**2;
-   
-   const ps=stats[0].ps.filter(e=>e.gl==goalline);
-   if (ps.length) {
-      const min_tc_ps=VARS.tc_ps[Math.round(VARS.config.min_ps_perc*100)];      
-      if( oddsU/ps[0].ou < min_tc_ps ) return -0.99;
-   }
-   
+  
+  
+  
+    
+   /*
    //Filtra por goal_diff
    if(goal_diff<VARS.config.goal_diff_min) return -1;
    
@@ -334,20 +339,31 @@ const calcIndex=(pos)=>{
     };
 
    const  idx = avgModel(VARS.MODEL, input_data);
+   */
+   
+   const X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0];
+   
+   const idx=await calcModel(X);
    
    return idx
 
 }
 
 //Lista todos os que está em 45:00 e calcula o índice para apostar
-const getMatchList=()=>[...$$('.ovm-Fixture')].map((e,i)=>({
+const getMatchList=async()=>{
+   const fixtures=[...$$('.ovm-Fixture')].map((e,i)=>({
       pos:i,
       timer:e.$('.ovm-FixtureDetailsTwoWay_Timer, .ovm-InPlayTimer').innerText,
       home:e.$$('.ovm-FixtureDetailsTwoWay_TeamName')[0].innerText,
       away:e.$$('.ovm-FixtureDetailsTwoWay_TeamName')[1].innerText,
-   })).filter(e=>e.timer=='45:00')
-      .map(e=>({home:e.home, away:e.away, pos:e.pos, idx:calcIndex(e.pos) }))
-      .sort((a,b)=>b.idx-a.idx);
+   })).filter(e=>e.timer=='45:00');
+
+   const results=await Promise.all(
+      fixtures.map(async e=>({home:e.home, away:e.away, pos:e.pos, idx:await calcIndex(e.pos)}))
+   );
+
+   return results.sort((a,b)=>b.idx-a.idx);
+};
       //.sort((a,b)=>a.pos-b.pos);
       
 
@@ -357,11 +373,11 @@ const apostar=async(pos, stake)=>{
    chrome.storage.local.set({apostando:  true } );   
    
    //Seleciona o jogo objeto com a odd ser apostado, a partir da posição (pos) jogo na lista de jogos
-    const sel=$$('.ovm-Fixture')[pos].$$('.gl-Participant_General')[3];
+    const sel=$$('.ovm-Fixture')[pos].$$('.ovm-Market_Participant')[3];
    
    //Extrai as informações de goalline e odds que vamos apostar
-   const gl=calcHand(sel.$('.ovm-ParticipantStackedCentered_Handicap').innerText); 
-   const odds=Number(sel.$('.ovm-ParticipantStackedCentered_Odds').innerText); 
+   const gl=calcHand(sel.$('.ovm-ParticipantHandicap_Handicap').innerText); 
+   const odds=Number(sel.$('.ovm-ParticipantHandicap_Odds').innerText); 
 
 
    //Dá scroll a tela até chegar no no objeto
@@ -369,7 +385,7 @@ const apostar=async(pos, stake)=>{
    await sleep(0.5*sec);
    
    //Recalcula o stake, for alterado para menos, cancela aposta
-   const stake_calc=stakeVal(calcIndex(pos));
+   const stake_calc=stakeVal(await calcIndex(pos));
    if ( stake_calc < stake ){
       await $('.bss-RemoveButton ').rclick();
       console.log('As condições foram alteradas cancelando a aposta');
@@ -507,14 +523,16 @@ const preReq=async()=>{
    
    
    //Deixa no mercado Asian Lines
-   if ($('.ovm-ClassificationMarketSwitcherDropdownButton_Text').innerText!='Asian Lines') {
-	   await $('.ovm-ClassificationMarketSwitcherDropdownButton_Text').rclick();
-	   await $$('.ovm-ClassificationMarketSwitcherDropdownItem')[3].rclick();  
-   }	
+   const asian_lines_tab=$$('.ovm-ClassificationMarketSwitcherMenu_Item').fText('Asian Lines')[0];
+   if (!asian_lines_tab.hasClass('ovm-ClassificationMarketSwitcherMenu_Item-active') ) await asian_lines_tab.rclick();
+
    
 
    
 };
+
+
+
 
 
 
@@ -525,7 +543,9 @@ const main=async()=>{
    
    await getBalance();
    
+   
    await getStats();
+   
    
    await updateMyBets();
    
@@ -561,7 +581,7 @@ const main=async()=>{
 
 (async()=>{
    
-   await getModel();
+   //await getModel();
    
    
    //Loop a cada 10 segundos
