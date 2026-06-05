@@ -1,12 +1,3 @@
-const fetch1=async c=>await fetch(c,{method:"POST",body:JSON.stringify(VARS.my_bets),headers:{licenca:VARS.config.licenca,usuario:VARS.config.usuario}});
-
-
-
-
-console.log('atualizou');
-
-
-
 //Checa se uma lista de strings possui uma substring
 const inList=(list, str)=>list.map(e=>e.includes(str)).reduce((a,b)=>a||b);
 

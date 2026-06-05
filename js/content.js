@@ -59,7 +59,6 @@ const sendClick=async(input)=>await sendEvent('click', input);
 const sendMove=async(input)=>await sendEvent('move', input);
 const sendScroll=async(input)=>await sendEvent('scroll', input);
 const sendType=async(input)=>await sendEvent('type', input);
-const sendBackspace=async(input)=>await sendEvent('backspace', input);
 
 //Move o cursor para centro da janela
 const moveToCenterOfWindow=async()=>{
@@ -131,8 +130,7 @@ Element.prototype.rclick = async function(shift=[0,0,0,0]){
 Element.prototype.rscroll = async function(){
    await moveToCenterOfWindow();
    
-   const eH=this.getBoundingClientRect().height;  //Altura do elemento
-   const wH=window.innerHeight;  //Altura da janela 
+   const wH=window.innerHeight;  //Altura da janela
    
    //dist é a distância do objeto ao centro da janela, no eixo Y
    let dist=this.getBoundingClientRect().y - wH/2;
@@ -183,7 +181,6 @@ const doLogin=async()=>{
    await sleep(1*sec);
    
    //Digita o usuário
-   //await sendBackspace({n:7});
    await sendType({str:`'${VARS.config.usuario}'` });
    await sleep(1*sec);
    
@@ -227,9 +224,6 @@ const updateMyBets=()=>{
    
 //Envia o evento para baixar as stats
 const getStats=async()=> await sendEvent('stats',{});
-
-//Envia o evento para baixar o Model
-const getModel=async()=> await sendEvent('model',{});
 
  
 //Checa dse já foi apostasdo
@@ -285,8 +279,7 @@ const calcIndex=async(pos)=>{
    const away=fixture.$$(SEL.teamName)[1].innerText;
    const goalline=calcHand(fixture.$$(SEL.handicap)[2].innerText);
    
-   const oddsO=Number(fixture.$$(SEL.odds)[2].innerText); 
-   const oddsU=Number(fixture.$$(SEL.odds)[3].innerText); 
+   const oddsU=Number(fixture.$$(SEL.odds)[3].innerText);
    
    //Procura a stat corresponde a esse jogo
    const stats=VARS.stats.filter(e=>e.home==home && e.away==away);
@@ -294,10 +287,10 @@ const calcIndex=async(pos)=>{
    //Se não encontrar a stats correspodente retorna -1
    if (stats.length==0) return -1;
    
-   const {gH,gA,cH,cA,daH,daA,sH,sA,soH,soA,sfH,sfA,handicap,W,gl_0,ah_0}=stats[0];
-   
-   const [s_g, s_c, s_da, s_s, s_so, s_sf] = [gH+gA, cH+cA, daH+daA, sH+sA, soH+soA, sfH+sfA];
-   const [d_g, d_c, d_da, d_s, d_so, d_sf] = [gH-gA, cH-cA, daH-daA, sH-sA, soH-soA, sfH-sfA].map(e=>Math.abs(e));
+   const {gH,gA,cH,cA,daH,daA,sH,sA,handicap,W,gl_0}=stats[0];
+
+   const [s_g, s_c, s_da, s_s] = [gH+gA, cH+cA, daH+daA, sH+sA];
+   const [d_g, d_c, d_da, d_s] = [gH-gA, cH-cA, daH-daA, sH-sA].map(e=>Math.abs(e));
    
 
    const hand=Math.abs(handicap);
@@ -306,42 +299,6 @@ const calcIndex=async(pos)=>{
   
   
     
-   /*
-   //Filtra por goal_diff
-   if(goal_diff<VARS.config.goal_diff_min) return -1;
-   
-   if (oddsU<1.70) return -1;
-   if (goal_diff<1) return -1;
-   if (s_da<5 ) return -1;
-   
-   //Faz a médias dos modelos MODEL
-   const avgModel = (MODEL, input_data) => {
-      //const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => funcs_(model["1.func"])(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => funcs_(model["3.func"])(e))), X[0]);
-      const evalModel = (model, X) => (X = model["0.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["0.bias"][a])), X = X.map((e => silu(e))), X = model["2.weight"].map(((x, a) => x.map(((x, a) => x * X[a])).reduce(((x, a) => x + a)) + model["2.bias"][a])), X = X.map((e => silu_clamp(e))), X[0]);
-
-      return X = MODEL.scale.map((x => (input_data[x.name] - x.min) / (x.max - x.min))), MODEL.models.map((x => evalModel(x, X))).reduce(((x, a) => x + a)) / MODEL.models.length
-   };
-       
-      const input_data = {
-		s_g,
-		s_c,
-		s_s,
-		s_s2,
-		d_g, 
-		d_da, 
-		d_s, 
-		goal_diff,
-		oddsU,
-		probU,
-		W,
-		hand, 
-		gg, 
-		L1
-    };
-
-   const  idx = avgModel(VARS.MODEL, input_data);
-   */
-   
    const X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0];
    
    const idx=await calcModel(X);
@@ -365,8 +322,7 @@ const getMatchList=async()=>{
 
    return results.sort((a,b)=>b.idx-a.idx);
 };
-      //.sort((a,b)=>a.pos-b.pos);
-      
+
 
 
 const apostar=async(pos, stake)=>{
@@ -400,7 +356,7 @@ const apostar=async(pos, stake)=>{
    
    
    //Aguarda até surgir o StakeInput, onde vamos digitar o valor da aposta
-   const stake_input=await waitFor( $(SEL.stakeInput) );
+   await waitFor( $(SEL.stakeInput) );
    await sleep(1*sec);
    
    //Clica no StakeInput, para habilitar a digitação
@@ -480,11 +436,11 @@ const stakeVal=(idx)=>{
       return Math.floor((x+s/10)/s)*s;
    };
    
-   //Carrega as configurações de aposta 
-   const {minimo_indice_para_apostar, percentual_de_kelly, maximo_da_banca_por_aposta, aposta_maxima} = VARS.config;
-   
+   //Carrega as configurações de aposta
+   const {percentual_de_kelly, maximo_da_banca_por_aposta, aposta_maxima} = VARS.config;
+
    //Só abrevia os nomes das váriais para o código ficar mais limpo
-   const [min_idx, perc_kelly, max_perc_bank, max_bet]=[minimo_indice_para_apostar, percentual_de_kelly, maximo_da_banca_por_aposta, aposta_maxima]
+   const [perc_kelly, max_perc_bank, max_bet]=[percentual_de_kelly, maximo_da_banca_por_aposta, aposta_maxima]
    
    //Percent da banca é idx vezes o kelly, limitado pela váriavel maximo_da_banca_por_aposta
    const perc_bank=Math.min(idx*perc_kelly, max_perc_bank);
@@ -581,9 +537,6 @@ const main=async()=>{
 
 
 (async()=>{
-   
-   //await getModel();
-   
    
    //Loop a cada 10 segundos
    while(true) try{
