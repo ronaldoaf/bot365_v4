@@ -29,7 +29,7 @@
       "matches": [
          "https://www.bet365.bet.br/*"
       ],
-      "js": ["js/shared.js","js/selectors.js","js/ort/ort.min.js","js/content.js"]
+      "js": ["js/shared.js","js/selectors.js","js/logger.js","js/ort/ort.min.js","js/content.js"]
     }
   ]
 }

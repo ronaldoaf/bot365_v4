@@ -1,9 +1,3 @@
-console.log2=console.log;
-console.log=(data)=>{
-   chrome.runtime.sendMessage({command:'log', data:data});
-   console.log2(data);
-}
-
 // Aponta os arquivos WASM para dentro da extensão
 ort.env.wasm.wasmPaths = chrome.runtime.getURL('js/ort/');
 
@@ -174,7 +168,7 @@ const doLogin=async()=>{
    const box_login=input_username.parentNode.parentNode.parentNode;
    
    await sleep(1*sec);
-   console.log('foi');
+   logger.info('foi');
    
    //Se já existir um usuário no campo (aparecendo um "X" )
    if ( input_username.nextElementSibling ){
@@ -395,7 +389,7 @@ const apostar=async(pos, stake)=>{
    const stake_calc=stakeVal(await calcIndex(pos));
    if ( stake_calc < stake ){
       await $(SEL.removeButton).rclick();
-      console.log('As condições foram alteradas cancelando a aposta');
+      logger.info('As condições foram alteradas cancelando a aposta');
       await sleep(0.5*sec);
       return 1;
    }
@@ -444,7 +438,7 @@ const apostar=async(pos, stake)=>{
    const rec=await waitFor($(SEL.receiptTick));
    if (!rec) {    
       //Se não aparecer vistinho, log erro e interrompe a rotina
-      console.log('Ocorreu erro, aposta não foi detectada com sucesso');
+      logger.info('Ocorreu erro, aposta não foi detectada com sucesso');
 	  chrome.runtime.sendMessage({command:'freeze'});
       return 1;
    }
@@ -558,7 +552,7 @@ const main=async()=>{
    
    const matches=await getMatchList();
    
-   console.log(matches);
+   logger.info(matches);
    
    //Seleciona os jogos para apostar e ordena de aleatória
    const sels=matches
@@ -573,7 +567,7 @@ const main=async()=>{
    
    const stake=stakeVal(idx);
    
-   console.log(`Aposta: ${home} v ${away}, val:${stake}`);
+   logger.info(`Aposta: ${home} v ${away}, val:${stake}`);
    await apostar( pos, stake);
    
    //Indica que a rotina de apostas terminou
@@ -611,7 +605,7 @@ const main=async()=>{
       //Se o bot_ligado desligado, não faz nada 
       if(!VARS.bot_ligado) continue;
       
-      console.log('Loop Principal');
+      logger.info('Loop Principal');
    
       //Aguarda a página estar complementamente carregada
       await waitFor( $(SEL.competitionList) );
@@ -632,7 +626,7 @@ const main=async()=>{
       
 
    } 
-   catch(e){ console.log(e) }
+   catch(e){ logger.info(e) }
     
 })();  
  
