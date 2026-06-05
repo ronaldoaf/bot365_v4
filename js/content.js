@@ -168,9 +168,9 @@ const doLogin=async()=>{
    await [...$$('button')].filter(e=>e.innerText=='Log In')[0].rclick();
    
    //Aguarda surgir o campo para digitar o usuário, se não aparecer interrompe a rotina
-   if( !(await waitFor( $('[placeholder*="Username"]') )) ) return;
+   if( !(await waitFor( $(SEL.usernameInput) )) ) return;
    
-   const input_username=$('[placeholder*="Username"]');
+   const input_username=$(SEL.usernameInput);
    const box_login=input_username.parentNode.parentNode.parentNode;
    
    await sleep(1*sec);
@@ -194,7 +194,7 @@ const doLogin=async()=>{
    await sleep(1*sec);
    
    //Clica no campo da senha
-   await $('[placeholder="Password"]').rclick();
+   await $(SEL.passwordInput).rclick();
    await sleep(0.5*sec);
    
    //Digita a senha
@@ -202,7 +202,7 @@ const doLogin=async()=>{
    await sleep(0.5*sec);
    
    //Clica no botão login
-   await [...$$('button[class*="slm2-"] > span')].filter(e=>e.innerText=='Log In')[0].rclick();
+   await [...$$(SEL.loginSubmit)].filter(e=>e.innerText=='Log In')[0].rclick();
    
    //Aguarda 5 segundos
    await sleep(3*sec);
@@ -220,7 +220,7 @@ const doLogin=async()=>{
 
  const getBalance=async()=>{
    //Procura por números, remove os pontos e as vírgulas e divide por 100
-   const balance=Number(/[0-9.,]+/.exec( $$('span[class*="hrm"]').fText('$')[0].innerText )[0].replace(/[.,]/g,'') )/100; 
+   const balance=Number(/[0-9.,]+/.exec( $$(SEL.balance).fText('$')[0].innerText )[0].replace(/[.,]/g,'') )/100; 
    chrome.storage.local.set({balance});
    VARS.balance=balance;
  };
@@ -257,35 +257,42 @@ const getSession = () => {
    return _sessionPromise;
 };
 
-const calcModel = async(X) => {
+//Fila que serializa as inferências. A InferenceSession do ONNX não suporta
+//session.run() concorrente sobre a mesma sessão (causa "memory access out of
+//bounds" no WASM). Como getMatchList chama calcModel em paralelo (Promise.all),
+//encadeamos as execuções para rodar uma de cada vez.
+let _runQueue = Promise.resolve();
+const calcModel = (X) => {
    //X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0]
+   const run = async () => {
+      const session = await getSession();
+      const inputTensor = new ort.Tensor('float32', Float32Array.from(X), [1, X.length]);
+      const results = await session.run({ float_input: inputTensor });
+      return results.variable.cpuData[0];
+   };
 
-   const session = await getSession();
-
-   const inputTensor = new ort.Tensor('float32', Float32Array.from(X), [1, X.length]);
-   const results = await session.run({ float_input: inputTensor });
-   const y=results.variable.cpuData[0];
-
-   return y
-
+   //Enfileira: a próxima inferência só começa após a anterior terminar.
+   const result = _runQueue.then(run);
+   _runQueue = result.catch(() => {});  //Mantém a fila viva mesmo se uma falhar
+   return result;
 }
 
 
 
              
 const calcIndex=async(pos)=>{
-   const fixture=$$('.ovm-Fixture')[pos];
+   const fixture=$$(SEL.fixture)[pos];
    
    //Se odds estiver suspensa retorna -1
-   if (fixture.$$('.ovm-ParticipantStackedCentered_Suspended').length >0 ) return -1;
+   if (fixture.$$(SEL.suspended).length >0 ) return -1;
    
    
-   const home=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[0].innerText;
-   const away=fixture.$$('.ovm-FixtureDetailsTwoWay_TeamName')[1].innerText;
-   const goalline=calcHand(fixture.$$('.ovm-ParticipantHandicap_Handicap')[2].innerText); 
+   const home=fixture.$$(SEL.teamName)[0].innerText;
+   const away=fixture.$$(SEL.teamName)[1].innerText;
+   const goalline=calcHand(fixture.$$(SEL.handicap)[2].innerText);
    
-   const oddsO=Number(fixture.$$('.ovm-ParticipantHandicap_Odds')[2].innerText); 
-   const oddsU=Number(fixture.$$('.ovm-ParticipantHandicap_Odds')[3].innerText); 
+   const oddsO=Number(fixture.$$(SEL.odds)[2].innerText); 
+   const oddsU=Number(fixture.$$(SEL.odds)[3].innerText); 
    
    //Procura a stat corresponde a esse jogo
    const stats=VARS.stats.filter(e=>e.home==home && e.away==away);
@@ -351,11 +358,11 @@ const calcIndex=async(pos)=>{
 
 //Lista todos os que está em 45:00 e calcula o índice para apostar
 const getMatchList=async()=>{
-   const fixtures=[...$$('.ovm-Fixture')].map((e,i)=>({
+   const fixtures=[...$$(SEL.fixture)].map((e,i)=>({
       pos:i,
-      timer:e.$('.ovm-FixtureDetailsTwoWay_Timer, .ovm-InPlayTimer').innerText,
-      home:e.$$('.ovm-FixtureDetailsTwoWay_TeamName')[0].innerText,
-      away:e.$$('.ovm-FixtureDetailsTwoWay_TeamName')[1].innerText,
+      timer:e.$(SEL.timer).innerText,
+      home:e.$$(SEL.teamName)[0].innerText,
+      away:e.$$(SEL.teamName)[1].innerText,
    })).filter(e=>e.timer=='45:00');
 
    const results=await Promise.all(
@@ -373,11 +380,11 @@ const apostar=async(pos, stake)=>{
    chrome.storage.local.set({apostando:  true } );   
    
    //Seleciona o jogo objeto com a odd ser apostado, a partir da posição (pos) jogo na lista de jogos
-    const sel=$$('.ovm-Fixture')[pos].$$('.ovm-Market_Participant')[3];
+    const sel=$$(SEL.fixture)[pos].$$(SEL.marketParticipant)[3];
    
    //Extrai as informações de goalline e odds que vamos apostar
-   const gl=calcHand(sel.$('.ovm-ParticipantHandicap_Handicap').innerText); 
-   const odds=Number(sel.$('.ovm-ParticipantHandicap_Odds').innerText); 
+   const gl=calcHand(sel.$(SEL.handicap).innerText);
+   const odds=Number(sel.$(SEL.odds).innerText);
 
 
    //Dá scroll a tela até chegar no no objeto
@@ -387,7 +394,7 @@ const apostar=async(pos, stake)=>{
    //Recalcula o stake, for alterado para menos, cancela aposta
    const stake_calc=stakeVal(await calcIndex(pos));
    if ( stake_calc < stake ){
-      await $('.bss-RemoveButton ').rclick();
+      await $(SEL.removeButton).rclick();
       console.log('As condições foram alteradas cancelando a aposta');
       await sleep(0.5*sec);
       return 1;
@@ -399,11 +406,11 @@ const apostar=async(pos, stake)=>{
    
    
    //Aguarda até surgir o StakeInput, onde vamos digitar o valor da aposta
-   const stake_input=await waitFor( $('.bsf-StakeBox_StakeInput') );
+   const stake_input=await waitFor( $(SEL.stakeInput) );
    await sleep(1*sec);
    
    //Clica no StakeInput, para habilitar a digitação
-   await $('.bsf-StakeBox_StakeInput').rclick([0,0,-75,0]); //x2 shift -75
+   await $(SEL.stakeInput).rclick([0,0,-75,0]); //x2 shift -75
    await sleep(0.5*sec);
    
    //Faz a digitação do valor a ser  apostado (stake)
@@ -412,10 +419,10 @@ const apostar=async(pos, stake)=>{
   
 
    //Se o checkbox de Free bet estiver visivel cria nele
-   const credits_checkbox=$$('.bsc-BetCreditsHeader_CheckBox')[0];
+   const credits_checkbox=$$(SEL.creditsCheckbox)[0];
    if(credits_checkbox){
-      if ( credits_checkbox.getBoundingClientRect().y<$('.bsf-StakeBox').getBoundingClientRect().y-1  ) {
-         if (credits_checkbox.classList.contains('bsc-BetCreditsHeader_CheckBox-selected')==false ){
+      if ( credits_checkbox.getBoundingClientRect().y<$(SEL.stakeBox).getBoundingClientRect().y-1  ) {
+         if (credits_checkbox.classList.contains(CLS.creditsCheckboxSelected)==false ){
             await credits_checkbox.rclick();
             await sleep(1*sec);
          }
@@ -423,18 +430,18 @@ const apostar=async(pos, stake)=>{
    }
    
    //Caso as condições se alterarem e o botão AcceptButton surgir, clica no "X" (RemoveButton) e cancela a aposta 
-   if (!$('.bsf-AcceptButton').classList.contains('Hidden') ){
-      await $('.bss-RemoveButton ').rclick();
+   if (!$(SEL.acceptButton).classList.contains(CLS.hidden) ){
+      await $(SEL.removeButton).rclick();
       await sleep(0.5*sec);
       return 1;
    }
    
    //Finalmente clica no PlaceBet para submeter aposata
-   await $('.bsf-PlaceBetButton').rclick();
+   await $(SEL.placeBetButton).rclick();
    await sleep(15*sec);
    
    //Aguarda até aparecer o visistinho verde, indicando que aposta foi realizada com sucesso
-   const rec=await waitFor($('.bss-ReceiptContent_Tick'));
+   const rec=await waitFor($(SEL.receiptTick));
    if (!rec) {    
       //Se não aparecer vistinho, log erro e interrompe a rotina
       console.log('Ocorreu erro, aposta não foi detectada com sucesso');
@@ -445,7 +452,7 @@ const apostar=async(pos, stake)=>{
 
    
    //Extrai a descrição do jogo da aposta feita
-   const home_v_away=$('.bss-NormalBetItem_FixtureDescription').innerText;
+   const home_v_away=$(SEL.betFixtureDescription).innerText;
    
    const tipo='u';
    
@@ -462,7 +469,7 @@ const apostar=async(pos, stake)=>{
    
    
    //Finaliza a rotina clicando no botão Done 
-   $('.bss-ReceiptContent_Done').rclick();
+   $(SEL.receiptDone).rclick();
    await sleep(1*sec);
   
    
@@ -508,23 +515,23 @@ const preReq=async()=>{
    }
    
    //Aceita os cookies
-   const cookie_accept=$('.ccm-CookieConsentPopup_Accept');
+   const cookie_accept=$(SEL.cookieAccept);
    if (cookie_accept) await cookie_accept.rclick();
    
  
    //Ao aparecer alguma oferta de Free Bet, clica para ignorar
-   const free_bet_close_button=$('.pm-FreeBetsPushGraphicCloseButton');
+   const free_bet_close_button=$(SEL.freeBetClose);
    if( free_bet_close_button ) await free_bet_close_button.rclick();
    
    //Ao aparecer as informações sobre o último login, clica para continuar
-   const last_login_button=[...$$('[class*="llr"]')].filter(e=>e.innerText=='Continue')[0];
+   const last_login_button=[...$$(SEL.lastLogin)].filter(e=>e.innerText=='Continue')[0];
    if( last_login_button ) await last_login_button.rclick();
    
    
    
    //Deixa no mercado Asian Lines
-   const asian_lines_tab=$$('.ovm-ClassificationMarketSwitcherMenu_Item').fText('Asian Lines')[0];
-   if (!asian_lines_tab.hasClass('ovm-ClassificationMarketSwitcherMenu_Item-active') ) await asian_lines_tab.rclick();
+   const asian_lines_tab=$$(SEL.marketSwitcherItem).fText('Asian Lines')[0];
+   if (!asian_lines_tab.hasClass(CLS.marketSwitcherItemActive) ) await asian_lines_tab.rclick();
 
    
 
@@ -599,7 +606,7 @@ const main=async()=>{
       
       
       //Verifica o balance existe indicando que está logado, estiver o Saldo com $
-      chrome.storage.local.set({logado: Boolean( $$('span[class*="hrm"]').fText('$')[0] ) } );
+      chrome.storage.local.set({logado: Boolean( $$(SEL.balance).fText('$')[0] ) } );
       
       //Se o bot_ligado desligado, não faz nada 
       if(!VARS.bot_ligado) continue;
@@ -607,7 +614,7 @@ const main=async()=>{
       console.log('Loop Principal');
    
       //Aguarda a página estar complementamente carregada
-      await waitFor( $('.ovm-CompetitionList') );
+      await waitFor( $(SEL.competitionList) );
  
  
       //Se não logado tenta fazer o login
