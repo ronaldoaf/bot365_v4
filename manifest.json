@@ -22,10 +22,10 @@
       "https://bot-ao.com/*",
       "https://www.bet365.bet.br/*"
    ],
-   "version": "1.13.0",
+   "version": "1.14.0",
    "web_accessible_resources": [
       {
-         "resources": [ "images/*", "js/ort/*.wasm", "model.onnx" ],
+         "resources": [ "images/*", "js/ort/*.wasm", "model.onnx","model_gl.onnx" ],
          "matches": [ "https://www.bet365.bet.br/*" ]
       }
    ],

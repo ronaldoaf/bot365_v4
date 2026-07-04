@@ -6,8 +6,13 @@ ort.env.wasm.wasmPaths = chrome.runtime.getURL('js/ort/');
 //para que seus timers (checkTabs, ping, toggleIcon...) continuem rodando.
 let _kaPort;
 const keepAlive=()=>{
+	try{
    _kaPort=chrome.runtime.connect({name:'keepalive'});
    _kaPort.onDisconnect.addListener(keepAlive);   //Reconecta se o worker reiniciar
+   }catch(e){
+	   
+	   location.reload();
+   }
 };
 keepAlive();
 setInterval(()=>{
@@ -96,6 +101,17 @@ const waitFor=async(el, timeout=20*sec)=>{
    return el;
 }
 
+// Verifica se o elemento está totalmente dentro do viewport
+const isInView=(el)=>{
+  const rect = el.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
 
 //Shorthands $ e $$ para os elementos
 Element.prototype.$ =function(q) { return this.querySelector(q)  };
@@ -103,7 +119,7 @@ Element.prototype.$$=function(q) { return [...this.querySelectorAll(q)] };
 
 
 const adjustBrower=()=>{
-   if ( window.navigator.userAgent.includes('Chrome') ) return {aX:0, aY:-9};
+   if ( window.navigator.userAgent.includes('Chrome') ) return {aX:0, aY:-8};
    if ( window.navigator.userAgent.includes('Firefox') ) return {aX:1, aY:-5};
    return {aX:0, aY:0};
 }
@@ -244,29 +260,31 @@ const jaFoiApostado=(home,away)=>VARS.my_bets.map(b=>b.home_v_away).includes(`${
 
 
 
-//Cria a sessão ONNX uma única vez e a reutiliza (cacheada por aba).
+//Cria a sessão ONNX de cada modelo uma única vez e a reutiliza (cacheada por aba).
 //Antes a sessão era recriada a cada fixture, recarregando o model.onnx em cada loop.
-let _sessionPromise = null;
-const getSession = () => {
-   if (!_sessionPromise) {
-      const modelUrl = chrome.runtime.getURL('model.onnx');
-      _sessionPromise = fetch(modelUrl)
+//Cada modelo (model.onnx, model_gl.onnx, model_gl0.onnx) tem sua própria sessão
+//cacheada, indexada pelo nome do arquivo.
+const _sessionPromises = {};
+const getSession = (modelFile) => {
+   if (!_sessionPromises[modelFile]) {
+      const modelUrl = chrome.runtime.getURL(modelFile);
+      _sessionPromises[modelFile] = fetch(modelUrl)
          .then(r => r.arrayBuffer())
          .then(buf => ort.InferenceSession.create(buf))
-         .catch(e => { _sessionPromise = null; throw e; });  //Permite nova tentativa se falhar
+         .catch(e => { _sessionPromises[modelFile] = null; throw e; });  //Permite nova tentativa se falhar
    }
-   return _sessionPromise;
+   return _sessionPromises[modelFile];
 };
 
 //Fila que serializa as inferências. A InferenceSession do ONNX não suporta
 //session.run() concorrente sobre a mesma sessão (causa "memory access out of
-//bounds" no WASM). Como getMatchList chama calcModel em paralelo (Promise.all),
-//encadeamos as execuções para rodar uma de cada vez.
+//bounds" no WASM). Como getMatchList chama os modelos em paralelo (Promise.all),
+//encadeamos as execuções para rodar uma de cada vez. A fila é compartilhada por
+//todos os modelos para garantir que apenas um session.run() rode por vez.
 let _runQueue = Promise.resolve();
-const calcModel = (X) => {
-   //X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0]
+const runModel = (modelFile, X) => {
    const run = async () => {
-      const session = await getSession();
+      const session = await getSession(modelFile);
       const inputTensor = new ort.Tensor('float32', Float32Array.from(X), [1, X.length]);
       const results = await session.run({ float_input: inputTensor });
       return results.variable.cpuData[0];
@@ -277,6 +295,30 @@ const calcModel = (X) => {
    _runQueue = result.catch(() => {});  //Mantém a fila viva mesmo se uma falhar
    return result;
 }
+
+//Consome o model.onnx
+const calcModel = (X) => {
+   //X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0]
+   return runModel('model.onnx', X);
+}
+
+
+const calcGoalDiff=(oo,ou)=>{
+	const d=(1/oo)/(1/oo+1/ou)-0.5;
+	if (d<-0.07) return -0.5;
+	if (d>=-0.07 && d<-0.025) return -0.25;
+	if (d>=-0.025 && d<0.025) return 0;
+	if (d>=0.025 && d<0.07) return 0.25;
+	return 0.5;
+}
+
+//Consome o model_gl.onnx
+const calcModelGl = (X) => {
+   //X=[oodsO, diff_gl, (goal-s_g) ]
+   return runModel('model_gl.onnx', X);
+}
+
+
 
 
 
@@ -290,33 +332,36 @@ const calcIndex=async(pos)=>{
    
    const home=fixture.$$(SEL.teamName)[0].innerText;
    const away=fixture.$$(SEL.teamName)[1].innerText;
-   const goalline=calcHand(fixture.$$(SEL.handicap)[2].innerText);
-   
-   const oddsU=Number(fixture.$$(SEL.odds)[3].innerText);
-   
+   const goal=calcHand(fixture.$$(SEL.handicap)[0].innerText);
+
+   const oddsO=Number(fixture.$$(SEL.odds)[0].innerText);
+   const oddsU=Number(fixture.$$(SEL.odds)[1].innerText);
+
    //Procura a stat corresponde a esse jogo
    const stats=VARS.stats.filter(e=>e.home==home && e.away==away);
    
    //Se não encontrar a stats correspodente retorna -1
    if (stats.length==0) return -1;
    
-   const {gH,gA,cH,cA,daH,daA,sH,sA,handicap,W,gl_0}=stats[0];
+   const {gH,gA,cH,cA,daH,daA,sH,sA,W,gl_0}=stats[0];
 
    const [s_g, s_c, s_da, s_s] = [gH+gA, cH+cA, daH+daA, sH+sA];
    const [d_g, d_c, d_da, d_s] = [gH-gA, cH-cA, daH-daA, sH-sA].map(e=>Math.abs(e));
    
+   
+   const diff_gl=calcGoalDiff(oddsO,oddsU);
 
-   const hand=Math.abs(handicap);
+   const goalline=goal+diff_gl;
+   const oddsU_calc=await calcModelGl([oddsO, diff_gl, (goal-s_g) ]);
+
    const goal_diff=goalline-s_g;
-  
-  
-  
-    
-   const X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0];
+
+   const hand=0;
+   const X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU_calc,goal_diff,hand,W,gl_0];
    
    const idx=await calcModel(X);
    
-   return idx
+   return idx;
 
 }
 
@@ -338,48 +383,107 @@ const getMatchList=async()=>{
 
 
 
-const apostar=async(pos, stake)=>{
+
+
+const calcIndex2=async(home,away,goalline,oddsU)=>{
+   //Procura a stat corresponde a esse jogo
+   const stats=VARS.stats.filter(e=>e.home==home && e.away==away);
+   
+   //Se não encontrar a stats correspodente retorna -1
+   if (stats.length==0) return -1;
+   
+   const {gH,gA,cH,cA,daH,daA,sH,sA,W,gl_0}=stats[0];
+
+   const [s_g, s_c, s_da, s_s] = [gH+gA, cH+cA, daH+daA, sH+sA];
+   const [d_g, d_c, d_da, d_s] = [gH-gA, cH-cA, daH-daA, sH-sA].map(e=>Math.abs(e));
+   
+   const hand=0.25;
+   
+   const goal_diff=goalline-s_g;
+   
+   const X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0];
+   
+   const idx=await calcModel(X);
+   
+   return idx
+}
+
+
+
+const apostar2=async(pos, home, away)=>{
    //Seta na varíavel que a rotina de apostas começou
-   chrome.storage.local.set({apostando:  true } );   
-   
-   //Seleciona o jogo objeto com a odd ser apostado, a partir da posição (pos) jogo na lista de jogos
-    const sel=$$(SEL.fixture)[pos].$$(SEL.marketParticipant)[3];
-   
-   //Extrai as informações de goalline e odds que vamos apostar
-   const gl=calcHand(sel.$(SEL.handicap).innerText);
-   const odds=Number(sel.$(SEL.odds).innerText);
+   chrome.storage.local.set({apostando:  true } );
 
+   const fixture=$$(SEL.fixture)[pos];
 
-   //Dá scroll a tela até chegar no no objeto
+   //Dá scroll até o jogo e clica nele para abrir todas as opções de aposta
+   await fixture.$(SEL.teamsWrapper).rscroll();
+   await sleep(1*sec);
+   await fixture.$(SEL.teamsWrapper).rclick();
+   await sleep(1*sec);
+
+   //Espera carregar os mercados
+   await waitFor( $(SEL.gridHeaderMarketTabs) );
+
+   //Clica no ícone do campo de futebol, para tirar da transmissão em vídeo
+   await $(SEL.pitchViewButton).rclick();
+
+   //Identifica a aba Asian Lines
+   const asian_lines_tab=$$(SEL.gridHeaderTabLink).filter(e=>e.innerText=='Asian Lines')[0].parentElement;
+
+   //Se a aba Asian Lines não estiver na tela, clica a seta para fazer o scroll e colocar na tela
+   if(!isInView(asian_lines_tab)) await $(SEL.eventNavRightArrow).rclick();
+   await sleep(1*sec);
+
+   //Se a aba Asian Lines não estiver selecionada, clica nela para selecionar
+   if ( !asian_lines_tab.hasClass(CLS.gridHeaderTabLinkSelected) ) await asian_lines_tab.rclick();
+
+   //Identifica o grupo com os mercados goalline
+   const market_group_goalline=$$(SEL.marketGroupPod)[1];
+
+   //Goallines disponíveis
+   const goallines=market_group_goalline.$$(SEL.participantLabel).map(e=>calcHand(e.innerText) );
+
+   //Testa cada goalline e guarda a de maior índice
+   let best_idx=-99;
+   let best_i;
+
+   await Promise.all(goallines.map(async (goalline, i) => {
+      const oddsO=Number(market_group_goalline.$$(SEL.participantOddsOnly)[i].innerText);
+      const oddsU=Number(market_group_goalline.$$(SEL.participantOddsOnly)[goallines.length+i].innerText);
+
+      const d=Math.abs( (1/oddsO)/(1/oddsO+1/oddsU) -0.5);
+
+      if (d<0.075){
+         const idx=await calcIndex2(home,away,goalline,oddsU);
+         if (idx>best_idx){
+            best_idx=idx;
+            best_i=i;
+         }
+      }
+   }));
+
+   //Calcula o stake
+   const stake=stakeVal(best_idx);
+
+   //Seleciona o elemento alvo da aposta (odds do Under da melhor goalline)
+   const sel=market_group_goalline.$$(SEL.participantOddsOnly)[goallines.length+best_i];
    await sel.rscroll();
    await sleep(0.5*sec);
-   
-   //Recalcula o stake, for alterado para menos, cancela aposta
-   const stake_calc=stakeVal(await calcIndex(pos));
-   if ( stake_calc < stake ){
-      await $(SEL.removeButton).rclick();
-      logger.info('As condições foram alteradas cancelando a aposta');
-      await sleep(0.5*sec);
-      return 1;
-   }
-   
-   
-   //Clica no objeto selecionado
    await sel.rclick();
-   
-   
+   await sleep(0.5*sec);
+
    //Aguarda até surgir o StakeInput, onde vamos digitar o valor da aposta
    await waitFor( $(SEL.stakeInput) );
    await sleep(1*sec);
-   
+
    //Clica no StakeInput, para habilitar a digitação
    await $(SEL.stakeInput).rclick([0,0,-75,0]); //x2 shift -75
    await sleep(0.5*sec);
-   
+
    //Faz a digitação do valor a ser  apostado (stake)
    await sendType({str:`'${stake}'` });
    await sleep(1*sec);
-  
 
    //Se o checkbox de Free bet estiver visivel cria nele
    const credits_checkbox=$$(SEL.creditsCheckbox)[0];
@@ -391,34 +495,34 @@ const apostar=async(pos, stake)=>{
          }
       }
    }
-   
-   //Caso as condições se alterarem e o botão AcceptButton surgir, clica no "X" (RemoveButton) e cancela a aposta 
+
+   //Caso as condições se alterarem e o botão AcceptButton surgir, clica no "X" (RemoveButton) e cancela a aposta
    if (!$(SEL.acceptButton).classList.contains(CLS.hidden) ){
       await $(SEL.removeButton).rclick();
       await sleep(0.5*sec);
       return 1;
    }
-   
+
    //Finalmente clica no PlaceBet para submeter aposata
    await $(SEL.placeBetButton).rclick();
    await sleep(15*sec);
-   
+
    //Aguarda até aparecer o visistinho verde, indicando que aposta foi realizada com sucesso
    const rec=await waitFor($(SEL.receiptTick));
-   if (!rec) {    
+   if (!rec) {
       //Se não aparecer vistinho, log erro e interrompe a rotina
       logger.info('Ocorreu erro, aposta não foi detectada com sucesso');
-	  chrome.runtime.sendMessage({command:'freeze'});
+      chrome.runtime.sendMessage({command:'freeze'});
       return 1;
    }
    await sleep(1*sec);
 
-   
-   //Extrai a descrição do jogo da aposta feita
+   //Extrai as informações da aposta feita
    const home_v_away=$(SEL.betFixtureDescription).innerText;
-   
    const tipo='u';
-   
+   const odds=Number($(SEL.oddsDropdownLabel).innerText);
+   const gl=goallines[best_i];
+
    //Adiciona a variável my_bets para controle do que já foi apostado
    VARS.my_bets.push({
       home_v_away,
@@ -429,14 +533,19 @@ const apostar=async(pos, stake)=>{
       timestamp: +new Date(),
    });
    chrome.storage.local.set({my_bets:  VARS.my_bets } );
-   
-   
-   //Finaliza a rotina clicando no botão Done 
+
+   //Finaliza a rotina clicando no botão Done
    $(SEL.receiptDone).rclick();
    await sleep(1*sec);
-  
-   
+
+   await sleep(5*sec);
+   chrome.storage.local.set({apostando:  false } );
+
+   //Volta para tela principal
+   location.hash='#/IP/B1';
 }
+
+
 
 const stakeVal=(idx)=>{
    
@@ -471,6 +580,9 @@ const stakeVal=(idx)=>{
 
 const preReq=async()=>{
    
+   //Se estiver apostando não faz nada
+   if (VARS.apostando) return;
+   
    //Se não estiver na tela do Soccer, força para entrar nessa tela
    if(location.hash!="#/IP/B1") {
       location.hash="#/IP/B1"; 
@@ -492,9 +604,9 @@ const preReq=async()=>{
    
    
    
-   //Deixa no mercado Asian Lines
-   const asian_lines_tab=$$(SEL.marketSwitcherItem).fText('Asian Lines')[0];
-   if (!asian_lines_tab.hasClass(CLS.marketSwitcherItemActive) ) await asian_lines_tab.rclick();
+   //Deixa no mercado Match Goals
+   const match_goals_tab=$$(SEL.marketSwitcherItem).fText('Match Goals')[0];
+   if (!match_goals_tab.hasClass(CLS.marketSwitcherItemActive) ) await match_goals_tab.rclick();
 
    
 
@@ -532,12 +644,10 @@ const main=async()=>{
    //Seleciona o primeiro da lista
    if (sels.length==0) return;
    const {pos, idx, home, away}=sels[0];
-   
-   
-   const stake=stakeVal(idx);
-   
-   logger.info(`Aposta: ${home} v ${away}, val:${stake}`);
-   await apostar( pos, stake);
+
+   logger.info(`Aposta: ${home} v ${away}, idx:${idx}`);
+
+   await apostar2( pos, home, away);
    
    //Indica que a rotina de apostas terminou
    chrome.storage.local.set({apostando:  false } );
