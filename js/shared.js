@@ -6,8 +6,10 @@ const default_vals={
    logado: false,
    click_type:false,
    apostando:false,
+   apostando_since:0,
    balance:0,
    my_bets:[],
+   errors:[],
    stats:[],
    MODEL:{},
    config:{

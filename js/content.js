@@ -411,8 +411,8 @@ const calcIndex2=async(home,away,goalline,oddsU)=>{
 
 
 const apostar2=async(pos, home, away)=>{
-   //Seta na varíavel que a rotina de apostas começou
-   chrome.storage.local.set({apostando:  true } );
+   //Seta na varíavel que a rotina de apostas começou, com timestamp para o watchdog do background
+   chrome.storage.local.set({apostando: true, apostando_since: +new Date() } );
 
    const fixture=$$(SEL.fixture)[pos];
 
@@ -420,13 +420,16 @@ const apostar2=async(pos, home, away)=>{
    await fixture.$(SEL.teamsWrapper).rscroll();
    await sleep(1*sec);
    await fixture.$(SEL.teamsWrapper).rclick();
-   await sleep(1*sec);
+   
+   await sleep(5*sec);
 
    //Espera carregar os mercados
    await waitFor( $(SEL.gridHeaderMarketTabs) );
 
    //Clica no ícone do campo de futebol, para tirar da transmissão em vídeo
-   await $(SEL.pitchViewButton).rclick();
+   //Nem todo jogo tem transmissão/tracker disponível, então o botão pode não existir
+   const pitch_view_button=$(SEL.pitchViewButton);
+   if (pitch_view_button) await pitch_view_button.rclick();
 
    //Identifica a aba Asian Lines
    const asian_lines_tab=$$(SEL.gridHeaderTabLink).filter(e=>e.innerText=='Asian Lines')[0].parentElement;
@@ -511,7 +514,7 @@ const apostar2=async(pos, home, away)=>{
    const rec=await waitFor($(SEL.receiptTick));
    if (!rec) {
       //Se não aparecer vistinho, log erro e interrompe a rotina
-      logger.info('Ocorreu erro, aposta não foi detectada com sucesso');
+      logger.error('Ocorreu erro, aposta não foi detectada com sucesso');
       chrome.runtime.sendMessage({command:'freeze'});
       return 1;
    }
@@ -646,9 +649,12 @@ const main=async()=>{
    const {pos, idx, home, away}=sels[0];
 
    logger.info(`Aposta: ${home} v ${away}, idx:${idx}`);
-
-   await apostar2( pos, home, away);
    
+   try{
+		await apostar2( pos, home, away);
+   } catch(err){
+	   logger.error(`Erro na aposta ${home} v ${away}: ${err && err.message ? err.message : err}`);
+   }
    //Indica que a rotina de apostas terminou
    chrome.storage.local.set({apostando:  false } );
    

@@ -6,4 +6,18 @@ const logger = {
       chrome.runtime.sendMessage({ command: 'log', data });
       console.log(data);
    },
+
+   //Loga erro, persiste no histórico (chrome.storage.local.errors) e dispara notificação no background
+   error: (data) => {
+      chrome.runtime.sendMessage({ command: 'log', data });
+      console.error(data);
+
+      const entry={ data: String(data), timestamp: +new Date() };
+      chrome.storage.local.get(['errors'], ({errors=[]})=>{
+         errors=[...errors, entry].slice(-50);
+         chrome.storage.local.set({errors});
+      });
+
+      chrome.runtime.sendMessage({ command: 'notify', data: String(data) });
+   },
 };

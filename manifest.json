@@ -15,7 +15,8 @@
       "storage",
       "unlimitedStorage",
       "tabs",
-      "alarms"
+      "alarms",
+      "notifications"
    ],
    "host_permissions": [
       "http://localhost:1313/*",

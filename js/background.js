@@ -104,9 +104,17 @@ const toggleIcon=()=> applyIcon(Boolean(VARS && VARS.bot_ligado));
 
 //=========================================================================================================
 chrome.runtime.onMessage.addListener(async(msg,sender)=>{
-   if (msg.command =='log') console.log(msg.data);   
-  
-  
+   if (msg.command =='log') console.log(msg.data);
+
+   //Notifica o usuário no sistema operacional quando uma aposta falha
+   if (msg.command =='notify') chrome.notifications.create('', {
+      type: 'basic',
+      iconUrl: 'images/logo_32.png',
+      title: 'Bot365 - Falha na aposta',
+      message: String(msg.data).slice(0,200),
+   });
+
+
     //Deixa o bot desligado por 15 minutos
 	if (msg.command=='freeze') {
 		chrome.storage.local.set({bot_ligado:false});
@@ -208,9 +216,23 @@ const ping=async()=>{
 
 setInterval(()=>{
    setVars();
-   
+
    toggleIcon();
-   
+
+   //Watchdog: se "apostando" ficar true por mais de 90s, força de volta para false.
+   //Usa timestamp persistido (não um setTimeout em memória) para sobreviver a reinícios
+   //do service worker MV3.
+   if (VARS && VARS.apostando && VARS.apostando_since && (Date.now()-VARS.apostando_since>90*1000) ){
+      console.log('Watchdog: aposta travada por mais de 90s, forçando apostando=false');
+      chrome.storage.local.set({apostando:false});
+      chrome.notifications.create('', {
+         type: 'basic',
+         iconUrl: 'images/logo_32.png',
+         title: 'Bot365 - Timeout na aposta',
+         message: 'A rotina de aposta não terminou em 90s e foi resetada automaticamente.',
+      });
+   }
+
 },1*1000);
 
 
@@ -225,7 +247,7 @@ setInterval(()=>{
 
 
 //A cada 30 segundos fecha as abas para serem reaberta depois
-setInterval(renewTabs, 30*60*1000);
+//setInterval(renewTabs, 30*60*1000);
 
 
 

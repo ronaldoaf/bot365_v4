@@ -1,5 +1,12 @@
 const $=(q)=>document.querySelector(q);
 
+chrome.storage.local.get(['errors'], ({errors=[]})=>{
+   const el=$('#erros');
+   el.innerHTML = errors.length==0
+      ? 'Nenhum erro registrado.'
+      : errors.slice(-10).reverse().map(e=> `<div>${new Date(e.timestamp).toLocaleString()} — ${e.data}</div>`).join('');
+});
+
 chrome.storage.local.get(['config','bot_ligado','click_type'], VARS=> {
    
    //Se deixa checkado se o bot estiver ligado
