@@ -6,6 +6,16 @@ hr {
 	border-top: 3px double #8c8b8b;
 
 }
+/*Títulos das seções recolhíveis (Últimos Erros / Teste dos Seletores)*/
+.secao-titulo{
+   cursor: pointer;
+   user-select: none;
+}
+.secao-titulo .seta{
+   font-size: 13px;
+   color: #8c8b8b;
+}
+
 .aviso{
    background-color: red;
    color: white;

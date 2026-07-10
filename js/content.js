@@ -600,7 +600,16 @@ const preReq=async()=>{
    //Ao aparecer alguma oferta de Free Bet, clica para ignorar
    const free_bet_close_button=$(SEL.freeBetClose);
    if( free_bet_close_button ) await free_bet_close_button.rclick();
-   
+
+   //Se o betslip ficar travado mostrando "mudança de preço/disponibilidade" (AcceptButton
+   //visível), fecha clicando no X (RemoveButton) para destravar o loop principal
+   const accept_button=$(SEL.acceptButton);
+   if ( accept_button && !accept_button.classList.contains(CLS.hidden) ){
+      const remove_button=$(SEL.removeButton);
+      if (remove_button) await remove_button.rclick();
+      await sleep(0.5*sec);
+   }
+
    //Ao aparecer as informações sobre o último login, clica para continuar
    const last_login_button=[...$$(SEL.lastLogin)].filter(e=>e.innerText=='Continue')[0];
    if( last_login_button ) await last_login_button.rclick();
