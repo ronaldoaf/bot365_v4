@@ -14,7 +14,6 @@ const SEL = {
 
    // Tela do evento (event view) - abas e mercados goalline (Asian Lines)
    gridHeaderMarketTabs: '.ipe-GridHeaderMarketTabs',
-   pitchViewButton:      'div[data-mbl-variant="ML1"][data-mbl-variant-selected="false"]',
    gridHeaderTabLink:    '.ipe-GridHeaderTabLink div',
    eventNavRightArrow:   '.ipe-EventViewNavBar_RightArrow',
    marketGroupPod:       '.gl-MarketGroupPod',
@@ -43,6 +42,9 @@ const SEL = {
    // Popups
    cookieAccept: '.ccm-CookieConsentPopup_Accept',
    freeBetClose: '.pm-FreeBetsPushGraphicCloseButton',
+
+   // Vídeo flutuante da transmissão (quando o pitchViewButton não existe e ele não é removido)
+   liveVideoModule: '.lv-LiveVideoModule-1',
 };
 
 //Nomes de classe usados em verificações de estado (classList.contains / hasClass)

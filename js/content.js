@@ -112,6 +112,12 @@ const isInView=(el)=>{
   );
 }
 
+// Verifica se dois retângulos (DOMRect) se sobrepõem
+const rectsOverlap=(r1,r2)=>!(
+   r1.right<=r2.left || r1.left>=r2.right ||
+   r1.bottom<=r2.top || r1.top>=r2.bottom
+);
+
 
 //Shorthands $ e $$ para os elementos
 Element.prototype.$ =function(q) { return this.querySelector(q)  };
@@ -179,7 +185,20 @@ Element.prototype.rscroll = async function(){
       //Recalcula a distância do objeto ao centro da janela, no eixo Y
       dist=this.getBoundingClientRect().y - wH/2;
    }
-  
+
+   //O vídeo flutuante da transmissão (.lv-LiveVideoModule-1) fica fixo no canto
+   //superior direito da tela e pode acabar cobrindo o alvo depois do scroll acima.
+   //Se isso acontecer, continua dando scroll para trás (empurra o alvo para baixo,
+   //para fora do vídeo) até o alvo ficar livre para o clique
+   const video=$(SEL.liveVideoModule);
+   if (video){
+      let tries=0;
+      while ( rectsOverlap(this.getBoundingClientRect(), video.getBoundingClientRect()) && tries<10 && window.scrollY>0 ){
+         await sendScroll({y: -wH/8});
+         tries++;
+      }
+   }
+
 };
 
 
@@ -425,11 +444,6 @@ const apostar2=async(pos, home, away)=>{
 
    //Espera carregar os mercados
    await waitFor( $(SEL.gridHeaderMarketTabs) );
-
-   //Clica no ícone do campo de futebol, para tirar da transmissão em vídeo
-   //Nem todo jogo tem transmissão/tracker disponível, então o botão pode não existir
-   const pitch_view_button=$(SEL.pitchViewButton);
-   if (pitch_view_button) await pitch_view_button.rclick();
 
    //Identifica a aba Asian Lines
    const asian_lines_tab=$$(SEL.gridHeaderTabLink).filter(e=>e.innerText=='Asian Lines')[0].parentElement;
