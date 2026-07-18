@@ -19,6 +19,7 @@ const default_vals={
       percentual_de_kelly:0.6,    //perc_kelly
       maximo_da_banca_por_aposta:0.14,   //max_perc_bank
       aposta_maxima:5000,   //max_bet
+      max_tabs:4,   //número máximo de abas abertas no navegador; excedentes mais antigas são fechadas
       usuario: 'usuario',
       senha: 'senha',
       licenca:'00000000-0000',

@@ -57,6 +57,20 @@ const checkTabs=()=>{
    
 }
 
+//Limita o número de abas abertas no navegador. Se exceder max_tabs, fecha as mais
+//antigas (menor tab.id, usado como proxy da ordem de criação) até respeitar o limite.
+const enforceMaxTabs=()=>{
+   const max_tabs=(VARS && VARS.config && VARS.config.max_tabs) || default_vals.config.max_tabs;
+
+   chrome.tabs.query({},(tabs)=>{
+      const excesso=tabs.length-max_tabs;
+      if (excesso<=0) return;
+
+      const mais_antigas=tabs.slice().sort((a,b)=>a.id-b.id).slice(0,excesso);
+      for (let tab of mais_antigas) chrome.tabs.remove(tab.id);
+   });
+}
+
 //Periodicamente fecha as abas e para serem abertas novamente
 const renewTabs=async()=>{ 
    if (VARS.bot_ligado==false) return;
@@ -239,9 +253,11 @@ setInterval(()=>{
 
 setInterval(()=>{
    ping();
-   
+
    //Se estiver no periodo de atividade checa as abas
    if( atActiveInt() ) checkTabs();
+
+   enforceMaxTabs();
 
 }, 5*1000);
 
@@ -282,6 +298,7 @@ chrome.alarms.onAlarm.addListener(async()=>{
    toggleIcon();
    ping();
    if( atActiveInt() ) checkTabs();
+   enforceMaxTabs();
 });
 
 
