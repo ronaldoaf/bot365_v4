@@ -577,8 +577,11 @@ const stakeVal=(idx)=>{
    const total_bank=VARS.balance + total_in_bets;
    
    //O stake será a percentual calculado vezes a banca total, limitado pela aposta_maxima
-   return Math.min(round125(perc_bank*total_bank),max_bet);
-   
+   const stake=Math.min(round125(perc_bank*total_bank),max_bet);
+
+   //Garante o stake mínimo de R$0.50
+   return Math.max(stake, 0.5);
+
 }
 
 const preReq=async()=>{
