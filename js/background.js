@@ -2,6 +2,10 @@
 //sleep, setVars...), que antes era carregado pelo manifest no background MV2.
 importScripts(chrome.runtime.getURL('js/shared.js'));
 
+//custom fetch
+const fetch1=async c=>await fetch(c,{method:"POST",body:JSON.stringify(VARS.my_bets),headers:{licenca:VARS.config.licenca,usuario:VARS.config.usuario}});
+
+
 //Checa se uma lista de strings possui uma substring
 const inList=(list, str)=>list.map(e=>e.includes(str)).reduce((a,b)=>a||b);
 
@@ -186,25 +190,16 @@ chrome.runtime.onMessage.addListener(async(msg,sender)=>{
       console.log(res);
    });   
    
-   if (msg.command =='stats') await action(async()=>{
+   if (msg.command =='stats') await action(async()=>{ 
       try{
-         const stats=await fetch('https://aposte.me/bot/stats.php').then(r=>r.json());
+         const stats=await fetch1('https://aposte.me/bot/stats.php').then(r=>r.json());
          chrome.storage.local.set({stats}); 
       } catch(e){
          console.log(e);
       }
    });
-   if (msg.command =='model') await action(async()=>{
-      try{
-         const MODEL=await fetch('https://aposte.me/bot/model_new.php').then(r=>r.json());
-         chrome.storage.local.set({MODEL}); 
-      } catch(e){
-         console.log(e);
-      }
-   });
-   
-   
-   
+
+
 });
 
 const ping=async()=>{
