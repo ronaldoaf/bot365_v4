@@ -7,6 +7,8 @@ const default_vals={
    click_type:false,
    apostando:false,
    apostando_since:0,
+   etapa_aposta:null,        //última etapa alcançada na rotina de aposta (diagnóstico de travamento)
+   ultimo_erro_evento:null,  //última falha de comunicação com o servidor de cliques
    balance:0,
    my_bets:[],
    errors:[],

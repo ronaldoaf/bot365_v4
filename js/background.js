@@ -142,11 +142,34 @@ chrome.runtime.onMessage.addListener(async(msg,sender)=>{
 		
 	}
    
-   //Ação genérica usada nos eventos para evitar a repetição de manipulação das variáveis uuid
+   //Ação genérica usada nos eventos para evitar a repetição de manipulação das variáveis uuid.
+   //O try/finally é essencial: sem ele, qualquer exceção dentro de func() (servidor de
+   //cliques em localhost:1313 fora do ar, ECONNREFUSED, timeout de rede) pulava o
+   //set({uuid:true}) e deixava o content script preso para sempre no while do sendEvent -
+   //o bot congelava no meio da aposta, tipicamente sem digitar o valor no betslip.
    const action=async(func)=>{
-      chrome.storage.local.set({[msg.data.uuid]:false}); 
-      await func();
-      chrome.storage.local.set({[msg.data.uuid]:true}); 
+      chrome.storage.local.set({[msg.data.uuid]:false});
+      try{
+         await func();
+      } catch(e){
+         console.log(`Falha no evento '${msg.command}':`, e);
+         chrome.storage.local.set({ ultimo_erro_evento:{ comando:msg.command, erro:String(e), timestamp:Date.now() } });
+      } finally {
+         chrome.storage.local.set({[msg.data.uuid]:true});
+      }
+   };
+
+   //fetch com timeout para o servidor local de cliques. Sem timeout, uma conexão
+   //pendurada segurava o await acima até o service worker MV3 ser encerrado por
+   //inatividade - e aí nem o finally chegava a rodar.
+   const fetchLocal=async(url, timeout=10000)=>{
+      const ctrl=new AbortController();
+      const t=setTimeout(()=>ctrl.abort(), timeout);
+      try{
+         return await fetch(url, {signal: ctrl.signal}).then(r=>r.text() );
+      } finally {
+         clearTimeout(t);
+      }
    };
    
 
@@ -154,41 +177,41 @@ chrome.runtime.onMessage.addListener(async(msg,sender)=>{
       //Se tiver a propriedade x1, considera que um clique em uma área
       if(msg.data.hasOwnProperty('x1')){
          const {x1,y1,x2,y2}=msg.data;
-         let res=await fetch(`http://localhost:1313/click_area?x1=${x1}&y1=${y1}&x2=${x2}&y2=${y2}`).then(r=>r.text() );
+         let res=await fetchLocal(`http://localhost:1313/click_area?x1=${x1}&y1=${y1}&x2=${x2}&y2=${y2}`);
          console.log(res);
       }
       //Se senão, considera que é um único ponto
       else{
          const {x,y}=msg.data;
-         let res=await fetch(`http://localhost:1313/click?x=${x}&y=${y}`).then(r=>r.text() );
+         let res=await fetchLocal(`http://localhost:1313/click?x=${x}&y=${y}`);
          console.log(res);
       }
    });
-   
+
    if (msg.command =='scroll') await action(async()=>{
       const {y}=msg.data;
-      let res=await fetch(`http://localhost:1313/scroll?y=${y}`).then(r=>r.text() );
+      let res=await fetchLocal(`http://localhost:1313/scroll?y=${y}`);
       console.log(res);
    });
 
- 
+
    if (msg.command =='move') await action(async()=>{
       const {x,y}=msg.data;
-      let res=await fetch(`http://localhost:1313/move?x=${x}&y=${y}`).then(r=>r.text() );
+      let res=await fetchLocal(`http://localhost:1313/move?x=${x}&y=${y}`);
       console.log(res);
    });
 
    if (msg.command =='type') await action(async()=>{
       const {str}=msg.data;
-      let res=await fetch(`http://localhost:1313/type?str=${str}`).then(r=>r.text() );
+      let res=await fetchLocal(`http://localhost:1313/type?str=${str}`);
       console.log(res);
    });
-   
+
    if (msg.command =='backspace') await action(async()=>{
 	  const {n}=msg.data;
-      let res=await fetch(`http://localhost:1313/backspace?n=${n}`).then(r=>r.text() );
+      let res=await fetchLocal(`http://localhost:1313/backspace?n=${n}`);
       console.log(res);
-   });   
+   });
    
    if (msg.command =='stats') await action(async()=>{ 
       try{
@@ -231,14 +254,19 @@ setInterval(()=>{
    //Watchdog: se "apostando" ficar true por mais de 90s, força de volta para false.
    //Usa timestamp persistido (não um setTimeout em memória) para sobreviver a reinícios
    //do service worker MV3.
+   //Com o registro de etapa no content script, o apostando_since é reiniciado a cada
+   //passo concluído: o watchdog agora mede tempo PARADO, não tempo total de aposta.
    if (VARS && VARS.apostando && VARS.apostando_since && (Date.now()-VARS.apostando_since>90*1000) ){
-      console.log('Watchdog: aposta travada por mais de 90s, forçando apostando=false');
-      chrome.storage.local.set({apostando:false});
-      chrome.notifications.create('', {
-         type: 'basic',
-         iconUrl: 'images/logo_32.png',
-         title: 'Bot365 - Timeout na aposta',
-         message: 'A rotina de aposta não terminou em 90s e foi resetada automaticamente.',
+      chrome.storage.local.get(['etapa_aposta'], ({etapa_aposta})=>{
+         const onde=etapa_aposta ? `${etapa_aposta.nome} (${etapa_aposta.home} v ${etapa_aposta.away})` : 'etapa desconhecida';
+         console.log(`Watchdog: aposta parada há mais de 90s em "${onde}", forçando apostando=false`);
+         chrome.storage.local.set({apostando:false});
+         chrome.notifications.create('', {
+            type: 'basic',
+            iconUrl: 'images/logo_32.png',
+            title: 'Bot365 - Timeout na aposta',
+            message: `Travou em: ${onde}. A rotina foi resetada automaticamente.`,
+         });
       });
    }
 

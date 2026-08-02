@@ -1,5 +1,34 @@
 const $=(q)=>document.querySelector(q);
 
+//Mostra em que etapa a rotina de aposta está (ou onde parou). É o indicador
+//direto para diagnosticar travamento: se o horário parar de avançar, o bot
+//empacou naquele passo.
+const pintaEtapa=()=>{
+   chrome.storage.local.get(['etapa_aposta','apostando','ultimo_erro_evento'], ({etapa_aposta, apostando, ultimo_erro_evento})=>{
+      const el=document.querySelector('#etapa');
+      if (!el) return;
+
+      if (!etapa_aposta){
+         el.innerHTML='Nenhuma aposta registrada nesta sessão.';
+      } else {
+         const parado=Math.round((Date.now()-etapa_aposta.timestamp)/1000);
+         const cor = apostando && parado>60 ? 'color:#c00;' : '';
+         el.innerHTML=`<div style="${cor}"><b>${apostando?'Apostando':'Última etapa'}:</b> ${etapa_aposta.nome}`+
+                      `<br>${etapa_aposta.home} v ${etapa_aposta.away}`+
+                      `<br>há ${parado}s (${new Date(etapa_aposta.timestamp).toLocaleTimeString()})</div>`;
+      }
+
+      //Falha de comunicação com o servidor de cliques é a causa nº1 de travamento
+      if (ultimo_erro_evento && Date.now()-ultimo_erro_evento.timestamp < 10*60*1000){
+         el.innerHTML+=`<div style="color:#c00; margin-top:4px;">ClickType falhou no evento '${ultimo_erro_evento.comando}' `+
+                       `às ${new Date(ultimo_erro_evento.timestamp).toLocaleTimeString()}</div>`;
+      }
+   });
+};
+
+pintaEtapa();
+setInterval(pintaEtapa, 2000);
+
 chrome.storage.local.get(['errors'], ({errors=[]})=>{
    const el=$('#erros');
    el.innerHTML = errors.length==0
