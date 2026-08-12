@@ -149,6 +149,30 @@ const rectsOverlap=(r1,r2)=>!(
 );
 
 
+//Mostra uma mensagem flutuante no canto da tela, sem travar a execução (diferente do alert())
+const showFloatingMessage=(text,duration=15*1000)=>{
+   const div=document.createElement('div');
+   div.innerText=text;
+   Object.assign(div.style,{
+      position:'fixed',
+      top:'16px',
+      right:'16px',
+      zIndex:2147483647,
+      background:'#c0392b',
+      color:'#fff',
+      padding:'12px 16px',
+      borderRadius:'8px',
+      fontSize:'14px',
+      fontFamily:'sans-serif',
+      maxWidth:'320px',
+      boxShadow:'0 2px 10px rgba(0,0,0,0.4)',
+      whiteSpace:'pre-line',
+   });
+   document.body.appendChild(div);
+   setTimeout(()=>div.remove(), duration);
+};
+
+
 //Shorthands $ e $$ para os elementos
 Element.prototype.$ =function(q) { return this.querySelector(q)  };
 Element.prototype.$$=function(q) { return [...this.querySelectorAll(q)] };
@@ -292,12 +316,13 @@ const doLogin=async()=>{
    //Aguarda 5 segundos
    await sleep(3*sec);
    
-   //Se acontecer falha de login, desliga o bot para não ficar em looop
+   //Se acontecer falha de login, mostra aviso flutuante e deixa o bot em freeze temporário
    if ( [...box_login.querySelectorAll('div')].filter(e=>e.innerText.includes('Your details were not recognised')).length>0 ){
-      chrome.storage.local.set({bot_ligado:false});
-      alert("Deu Merda no Login!!!\n\n\n O bot foi desligado");
+      showFloatingMessage('Deu Merda no Login!!!\n\nO bot foi congelado temporariamente.');
+      chrome.runtime.sendMessage({command:'freeze'});
+      return;
    }
-   
+
    chrome.storage.local.set({logado: true } );
    
 };
