@@ -272,6 +272,13 @@ Element.prototype.rscroll = async function(){
 };
 
 
+//Lê o valor que está de fato dentro de um campo do formulário de login
+const lerCampoLogin=(sel)=>{
+   const el=$(sel);
+   if (!el) return null;
+   return String(el.value!=null ? el.value : el.innerText || '');
+};
+
 //Rotina que a realiza o login 
 const doLogin=async()=>{
    //Clicla no botão "Log in"
@@ -302,6 +309,15 @@ const doLogin=async()=>{
    await sendType({str:`'${VARS.config.usuario}'` });
    await sleep(1*sec);
    
+   //Confere se o usuário entrou mesmo no campo. Se o clique errou o alvo ou o foco
+   //foi roubado, a digitação se perde e clicar em "Log In" geraria uma falha de
+   //credencial (e o freeze do bot) sem que a senha/usuário estejam errados
+   const usuario_digitado=lerCampoLogin(SEL.usernameInput);
+   if ( usuario_digitado!=String(VARS.config.usuario) ){
+      logger.error(`Usuário não foi digitado corretamente no login (campo="${usuario_digitado}"), login abortado`);
+      return;
+   }
+   
    //Clica no campo da senha
    await $(SEL.passwordInput).rclick();
    await sleep(0.5*sec);
@@ -309,6 +325,13 @@ const doLogin=async()=>{
    //Digita a senha
    await sendType({str:`'${VARS.config.senha}'` });
    await sleep(0.5*sec);
+   
+   //Mesma conferência para a senha (o valor não é logado, só o tamanho)
+   const senha_digitada=lerCampoLogin(SEL.passwordInput);
+   if ( senha_digitada!=String(VARS.config.senha) ){
+      logger.error(`Senha não foi digitada corretamente no login (${senha_digitada==null?'campo ausente':`${senha_digitada.length} de ${String(VARS.config.senha).length} caracteres`}), login abortado`);
+      return;
+   }
    
    //Clica no botão login
    await [...$$(SEL.loginSubmit)].filter(e=>e.innerText=='Log In')[0].rclick();
