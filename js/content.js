@@ -398,9 +398,12 @@ let _runQueue = Promise.resolve();
 const runModel = (modelFile, X) => {
    const run = async () => {
       const session = await getSession(modelFile);
+
+      //Usa os nomes reais do modelo: o model_gl.onnx exporta float_input/variable,
+      //o novo model.onnx exporta input/output
       const inputTensor = new ort.Tensor('float32', Float32Array.from(X), [1, X.length]);
-      const results = await session.run({ float_input: inputTensor });
-      return results.variable.cpuData[0];
+      const results = await session.run({ [session.inputNames[0]]: inputTensor });
+      return results[session.outputNames[0]].cpuData[0];
    };
 
    //Enfileira: a próxima inferência só começa após a anterior terminar.
@@ -411,7 +414,7 @@ const runModel = (modelFile, X) => {
 
 //Consome o model.onnx
 const calcModel = (X) => {
-   //X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0]
+   //X=[s_g,s_s,s_c,d_g,oddsU,goal_diff,W,gl_0,i_da], i_da=d_da/s_da
    return runModel('model.onnx', X);
 }
 
@@ -459,9 +462,12 @@ const calcIndex=async(pos)=>{
    const {gH,gA,cH,cA,daH,daA,sH,sA,W,gl_0}=stats[0];
 
    const [s_g, s_c, s_da, s_s] = [gH+gA, cH+cA, daH+daA, sH+sA];
-   const [d_g, d_c, d_da, d_s] = [gH-gA, cH-cA, daH-daA, sH-sA].map(e=>Math.abs(e));
-   
-   
+   const [d_g, d_da] = [gH-gA, daH-daA].map(e=>Math.abs(e));
+
+   //i_da = d_da/s_da: índice de desequilíbrio dos ataques perigosos
+   const i_da=s_da>0 ? d_da/s_da : 0;
+
+
    const diff_gl=calcGoalDiff(oddsO,oddsU);
 
    const goalline=goal+diff_gl;
@@ -469,8 +475,7 @@ const calcIndex=async(pos)=>{
 
    const goal_diff=goalline-s_g;
 
-   const hand=0;
-   const X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU_calc,goal_diff,hand,W,gl_0];
+   const X=[s_g,s_s,s_c,d_g,oddsU_calc,goal_diff,W,gl_0,i_da];
    
    const idx=await calcModel(X);
    
@@ -508,13 +513,14 @@ const calcIndex2=async(home,away,goalline,oddsU)=>{
    const {gH,gA,cH,cA,daH,daA,sH,sA,W,gl_0}=stats[0];
 
    const [s_g, s_c, s_da, s_s] = [gH+gA, cH+cA, daH+daA, sH+sA];
-   const [d_g, d_c, d_da, d_s] = [gH-gA, cH-cA, daH-daA, sH-sA].map(e=>Math.abs(e));
-   
-   const hand=0.25;
-   
+   const [d_g, d_da] = [gH-gA, daH-daA].map(e=>Math.abs(e));
+
+   //i_da = d_da/s_da: índice de desequilíbrio dos ataques perigosos
+   const i_da=s_da>0 ? d_da/s_da : 0;
+
    const goal_diff=goalline-s_g;
-   
-   const X=[s_g,s_c,s_da,s_s,d_g,d_c,d_da,d_s,oddsU,goal_diff,hand,W,gl_0];
+
+   const X=[s_g,s_s,s_c,d_g,oddsU,goal_diff,W,gl_0,i_da];
    
    const idx=await calcModel(X);
    
