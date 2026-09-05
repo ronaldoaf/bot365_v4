@@ -101,7 +101,7 @@ const sendType=async(input)=>await sendEvent('type', input);
 const moveToCenterOfWindow=async()=>{
    const {screenX,screenY,outerWidth,outerHeight}=window;
    const x=screenX+outerWidth/2;
-   const y=screenX+outerHeight/2;
+   const y=screenY+outerHeight/2;
    
    await sendMove({x,y});
 }
@@ -216,11 +216,22 @@ Element.prototype.rclick = async function(shift=[0,0,0,0]){
 
 
 //Adiciona o evento rscroll (scroll pelo nodejs) a todos os elementos
-Element.prototype.rscroll = async function(){
+//
+//"resolver": função opcional que reconsulta o elemento vivo no DOM a cada
+//volta do loop. Necessário para alvos dentro de listas virtualizadas (ex:
+//Inplay), onde o nó capturado antes do scroll pode ser reciclado/trocado
+//pelo React no meio da rolagem - sem reconsultar, getBoundingClientRect()
+//fica preso na posição antiga (ou some), o loop calcula uma distância errada
+//e o scroll para longe do alvo real, deixando o jogo fora da janela.
+Element.prototype.rscroll = async function(resolver){
    await moveToCenterOfWindow();
-   
+
+   //Elemento "vivo": se não houver resolver (compatibilidade com chamadas
+   //antigas), usa sempre o mesmo nó capturado em 'this'
+   const alvo=()=> (resolver ? resolver() : null) || this;
+
    const wH=window.innerHeight;  //Altura da janela
-   
+
    //Limite inferior do scroll. window.scrollMaxY é propriedade EXCLUSIVA do Firefox:
    //no Chrome ela é undefined, a comparação nunca era verdadeira e o loop abaixo
    //podia rolar para sempre num alvo que não consegue ser centralizado (elemento
@@ -228,7 +239,7 @@ Element.prototype.rscroll = async function(){
    const maxScrollY=()=>Math.max(0, document.documentElement.scrollHeight - wH);
 
    //dist é a distância do objeto ao centro da janela, no eixo Y
-   let dist=this.getBoundingClientRect().y - wH/2;
+   let dist=alvo().getBoundingClientRect().y - wH/2;
 
    //Enquanto a dist maior a 1/4  da altura da janela faz o scroll
    let voltas=0;
@@ -242,18 +253,42 @@ Element.prototype.rscroll = async function(){
 
       const scroll_antes=window.scrollY;
 
-      //Desloca a scrollbar exatamente 1/2 da altura da janela
-      await sendScroll({y: Math.sign(dist) * wH/2 });
+      //Passo proporcional à distância, limitado a 6 telas por vez. A lista de
+      //"Match Goals" da bet365 NÃO é virtualizada: um jogo no fundo da lista
+      //pode estar a mais de 20 mil px do scroll atual. Com o passo fixo de
+      //wH/2 isso exigia ~60 iterações e o loop batia no teto 'voltas>20' bem
+      //antes, parando com o jogo fora da tela - o clique seguinte caía fora da
+      //janela e o jogo não abria. Perto do alvo o passo volta a ser pequeno e
+      //a convergência (tolerância wH/4) continua igual.
+      const passo=Math.min(Math.abs(dist), 6*wH);
+      await sendScroll({y: Math.sign(dist) * passo });
+
+      //A confirmação do sendScroll só garante que o driver nativo
+      //(localhost:1313) disparou o evento de scroll no SO - não que o Chrome
+      //já repintou a página. Sem esperar, window.scrollY às vezes ainda não
+      //tinha atualizado no instante desta checagem, e o loop concluía
+      //(errado) que o scroll estava bloqueado, abortando cedo e deixando o
+      //jogo fora da janela. Dá até 500ms para o scrollY realmente mudar
+      //antes de desistir.
+      let esperas=0;
+      while (window.scrollY==scroll_antes && esperas<5){
+         await sleep(100);
+         esperas++;
+      }
 
       //Se a página não se moveu (elemento fixo, scroll bloqueado por overlay),
       //insistir não adianta e só trava o bot
       if (window.scrollY==scroll_antes) break;
 
-      //Trava de segurança contra qualquer outro caso de não convergência
-      if (++voltas>20) break;
+      //Trava de segurança contra qualquer outro caso de não convergência.
+      //O guard real contra loop infinito é o 'window.scrollY==scroll_antes'
+      //acima (página não se moveu); este teto é só um limite superior amplo,
+      //dimensionado para alcançar qualquer jogo da lista mesmo com passo já
+      //reduzido perto do alvo.
+      if (++voltas>60) break;
 
       //Recalcula a distância do objeto ao centro da janela, no eixo Y
-      dist=this.getBoundingClientRect().y - wH/2;
+      dist=alvo().getBoundingClientRect().y - wH/2;
    }
 
    //O vídeo flutuante da transmissão (.lv-LiveVideoModule-1) fica fixo no canto
@@ -263,10 +298,21 @@ Element.prototype.rscroll = async function(){
    const video=$(SEL.liveVideoModule);
    if (video){
       let tries=0;
-      while ( rectsOverlap(this.getBoundingClientRect(), video.getBoundingClientRect()) && tries<10 && window.scrollY>0 ){
+      while ( rectsOverlap(alvo().getBoundingClientRect(), video.getBoundingClientRect()) && tries<10 && window.scrollY>0 ){
          await sendScroll({y: -wH/8});
          tries++;
       }
+   }
+
+   //Confirma que o alvo pelo menos ficou parcialmente visível verticalmente.
+   //Sem essa checagem, o código seguia direto para o rclick mesmo com o jogo
+   //totalmente fora da janela (loop interrompido por um dos breaks acima),
+   //calculando coordenadas de clique fora da área visível - o clique não
+   //abria o jogo e o erro só aparecia bem depois, numa etapa posterior, sem
+   //dizer que a causa real foi o scroll não ter chegado no alvo.
+   const rectFinal=alvo().getBoundingClientRect();
+   if (rectFinal.bottom<=0 || rectFinal.top>=wH){
+      throw new Error('Não foi possível dar scroll até o elemento: ficou fora da janela');
    }
 
 };
@@ -466,8 +512,8 @@ const calcIndex=async(pos)=>{
 
    //i_da = d_da/s_da: índice de desequilíbrio dos ataques perigosos
    const i_da=s_da>0 ? d_da/s_da : 0;
-
-
+   
+   
    const diff_gl=calcGoalDiff(oddsO,oddsU);
 
    const goalline=goal+diff_gl;
@@ -517,9 +563,9 @@ const calcIndex2=async(home,away,goalline,oddsU)=>{
 
    //i_da = d_da/s_da: índice de desequilíbrio dos ataques perigosos
    const i_da=s_da>0 ? d_da/s_da : 0;
-
+   
    const goal_diff=goalline-s_g;
-
+   
    const X=[s_g,s_s,s_c,d_g,oddsU,goal_diff,W,gl_0,i_da];
    
    const idx=await calcModel(X);
@@ -608,11 +654,46 @@ const apostar2=async(pos, home, away)=>{
    const teams_wrapper=fixture.$(SEL.teamsWrapper);
    if (!teams_wrapper) throw new Error(`TeamsWrapper não encontrado em ${home} v ${away}`);
 
-   await teams_wrapper.rscroll();
-   await sleep(1*sec);
+   //Passa um resolver: a lista do Inplay é virtualizada e pode trocar o nó do
+   //teams_wrapper no meio do próprio scroll, não só depois dele.
+   //
+   //Retry: a lista de "Match Goals" carrega mais jogos conforme se rola para
+   //baixo (lazy-load), então enquanto o rscroll rola em direção a um jogo do
+   //fundo entram linhas novas acima e o alvo é EMPURRADO mais para baixo. O
+   //rscroll converge na posição antiga, sai, e no instante do rclick o jogo já
+   //saiu da viewport - o clique cai fora e o jogo não abre. Aqui, depois de
+   //cada scroll, reconsulta o nó vivo e confirma que ele ficou de fato na tela;
+   //se não ficou (alvo se moveu), rola de novo. Até 4 tentativas.
+   let teams_wrapper2=teams_wrapper;
+   for (let tentativa=1; ; tentativa++){
 
-   //Re-consulta depois do scroll: a lista do Inplay é virtualizada e pode trocar o nó
-   const teams_wrapper2=fixture.$(SEL.teamsWrapper) || teams_wrapper;
+      //Reinicia o relógio do watchdog a cada tentativa: 4 rolagens seguidas
+      //podem passar de 90s e o watchdog abortaria uma abertura que está
+      //progredindo
+      etapa(`abrindo o jogo (scroll ${tentativa}/4)`);
+
+      //Se a lista cresceu demais durante a rolagem, o próprio rscroll lança
+      //("ficou fora da janela"). Nesse caso a resposta certa é rolar de novo do
+      //ponto novo, não abortar a aposta - então engole o erro e deixa o retry
+      //abaixo decidir, exceto na última tentativa.
+      try{
+         await teams_wrapper2.rscroll(()=>fixture.$(SEL.teamsWrapper));
+      }catch(e){
+         if (tentativa>=4) throw e;
+         logger.info(`[aposta ${home} v ${away}] rscroll falhou (tentativa ${tentativa}/4): ${e.message} - tentando de novo`);
+      }
+      await sleep(1*sec);
+
+      //Re-consulta depois do scroll: a lista do Inplay é virtualizada e pode trocar o nó
+      teams_wrapper2=fixture.$(SEL.teamsWrapper) || teams_wrapper2;
+
+      if (isInView(teams_wrapper2)) break;
+
+      if (tentativa>=4) throw new Error(`Jogo não ficou na viewport após ${tentativa} tentativas de scroll (${home} v ${away}): a lista deve ter crescido durante a rolagem`);
+
+      logger.info(`[aposta ${home} v ${away}] alvo saiu da viewport depois do scroll (tentativa ${tentativa}/4), rolando de novo`);
+   }
+
    await teams_wrapper2.rclick();
 
    await sleep(5*sec);
