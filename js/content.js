@@ -589,6 +589,10 @@ const lerStake=()=>{
 //roubado por um popup) - exatamente o sintoma de "não digita o valor no betslip".
 const typeStake=async(stake)=>{
 
+   //Normaliza para no máximo 2 casas decimais: o campo do betslip rejeita valores
+   //como 4.6000000000000005 e a conferência do valor nunca fecharia
+   stake=Math.round(Number(stake)*100)/100;
+
    for (let tentativa=1; tentativa<=3; tentativa++){
 
       const input=$(SEL.stakeInput);
@@ -884,8 +888,10 @@ const stakeVal=(idx)=>{
    //O stake será a percentual calculado vezes a banca total, limitado pela aposta_maxima
    const stake=Math.min(round125(perc_bank*total_bank),max_bet);
 
-   //Garante o stake mínimo de R$0.50
-   return Math.max(stake, 0.5);
+   //Garante o stake mínimo de R$0.50 e limita a 2 casas decimais: round125 e as
+   //multiplicações acima geram lixo de ponto flutuante (ex.: 4.6000000000000005)
+   //que o campo do betslip não aceita, travando a confirmação da digitação
+   return Math.round(Math.max(stake, 0.5)*100)/100;
 
 }
 
