@@ -757,6 +757,25 @@ const apostar2=async(pos, home, away)=>{
    const best_idx=melhor.idx;
    const best_i=melhor.i;
 
+   //A triagem inicial na lista de jogos aprovou este jogo, mas com as odds reais
+   //dos mercados o índice recalculado ficou negativo: não há valor na aposta.
+   //Registra o jogo em my_bets (stake 0) para que jaFoiApostado() o ignore e o
+   //bot não fique reabrindo o mesmo jogo a cada ciclo. O registro expira sozinho
+   //em 60 min pelo updateMyBets().
+   if (best_idx<0){
+      logger.info(`Índice recalculado negativo (${best_idx.toFixed(4)}) em ${home} v ${away}, aposta cancelada e jogo marcado`);
+      VARS.my_bets.push({
+         home_v_away: `${home} v ${away}`,
+         stake: 0,
+         gl: goallines[best_i],
+         odds: 0,
+         tipo: 'u',
+         timestamp: +new Date(),
+      });
+      chrome.storage.local.set({my_bets: VARS.my_bets});
+      return 1;
+   }
+
    //Calcula o stake
    const stake=stakeVal(best_idx);
 
