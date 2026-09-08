@@ -43,6 +43,12 @@ const SEL = {
    cookieAccept: '.ccm-CookieConsentPopup_Accept',
    freeBetClose: '.pm-FreeBetsPushGraphicCloseButton',
 
+   // Popup de oferta/promoção injetado pelo Optimove/BeeFree (ex.: "bet365 Club").
+   // Vem num container próprio (.bee-popup-container) com um botão X sem texto
+   // (.otr-0), filho direto do wrapper .otr-1.
+   offerPopup:  '.bee-popup-container',
+   offerClose:  '.otr-1 > button',
+
    // Vídeo flutuante da transmissão (quando o pitchViewButton não existe e ele não é removido)
    liveVideoModule: '.lv-LiveVideoModule-1',
 };

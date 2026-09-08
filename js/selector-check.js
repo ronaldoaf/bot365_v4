@@ -201,6 +201,9 @@
       //---------- Popups condicionais ----------
       add('Popups','cookieAccept',SEL.cookieAccept,INFO, q(SEL.cookieAccept)?'presente':'ausente (normal após aceitar os cookies)');
       add('Popups','freeBetClose',SEL.freeBetClose,INFO, q(SEL.freeBetClose)?'presente':'ausente (normal sem oferta na tela)');
+      add('Popups','offerPopup',SEL.offerPopup,INFO, q(SEL.offerPopup)?'presente':'ausente (normal sem popup de promoção na tela)');
+      add('Popups','offerClose',SEL.offerClose, q(SEL.offerPopup)?(q(SEL.offerClose)?OK:FAIL):INFO,
+         q(SEL.offerPopup)?(q(SEL.offerClose)?'X encontrado':'popup presente mas X não localizado'):'só testável com o popup de promoção na tela');
       add('Popups','lastLogin',SEL.lastLogin,INFO, qq(SEL.lastLogin).length>0?'presente':'ausente (normal fora do pós-login)');
 
       //Resumo no console da página (DevTools)

@@ -831,7 +831,7 @@ const apostar2=async(pos, home, away)=>{
 
    etapa('clicando no PlaceBet');
    await place_bet.rclick();
-   await sleep(15*sec);
+   await sleep(10*sec);
 
    //Aguarda até aparecer o visistinho verde, indicando que aposta foi realizada com sucesso
    etapa('aguardando o recibo');
@@ -933,6 +933,13 @@ const preReq=async()=>{
    //Ao aparecer alguma oferta de Free Bet, clica para ignorar
    const free_bet_close_button=$(SEL.freeBetClose);
    if( free_bet_close_button ) await free_bet_close_button.rclick();
+
+   //Ao aparecer o popup de oferta/promoção do Optimove/BeeFree (ex.: "bet365 Club"),
+   //que não é o push de Free Bet e vem com um X sem texto, fecha clicando no X
+   if( $(SEL.offerPopup) ){
+      const offer_close_button=$(SEL.offerClose);
+      if( offer_close_button ) await offer_close_button.rclick();
+   }
 
    //Se o betslip ficar travado mostrando "mudança de preço/disponibilidade" (AcceptButton
    //visível), fecha clicando no X (RemoveButton) para destravar o loop principal
